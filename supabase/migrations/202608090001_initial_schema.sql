@@ -3,12 +3,30 @@
 
 create extension if not exists pgcrypto;
 
-create type public.user_role as enum ('admin', 'user');
-create type public.checkin_type as enum ('lunch', 'dinner');
-create type public.product_status as enum ('active', 'inactive', 'sold_out');
-create type public.product_category as enum ('food', 'date', 'gift', 'game', 'special', 'other');
-create type public.order_status as enum ('pending', 'approved', 'rejected', 'pending_fulfillment', 'completed', 'cancelled');
-create type public.wallet_direction as enum ('income', 'expense', 'freeze', 'unfreeze');
+do $$ begin
+  create type public.user_role as enum ('admin', 'user');
+exception when duplicate_object then null;
+end $$;
+do $$ begin
+  create type public.checkin_type as enum ('lunch', 'dinner');
+exception when duplicate_object then null;
+end $$;
+do $$ begin
+  create type public.product_status as enum ('active', 'inactive', 'sold_out');
+exception when duplicate_object then null;
+end $$;
+do $$ begin
+  create type public.product_category as enum ('food', 'date', 'gift', 'game', 'special', 'other');
+exception when duplicate_object then null;
+end $$;
+do $$ begin
+  create type public.order_status as enum ('pending', 'approved', 'rejected', 'pending_fulfillment', 'completed', 'cancelled');
+exception when duplicate_object then null;
+end $$;
+do $$ begin
+  create type public.wallet_direction as enum ('income', 'expense', 'freeze', 'unfreeze');
+exception when duplicate_object then null;
+end $$;
 
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
