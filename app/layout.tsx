@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     default: "Jj的快乐小屋",
     template: "%s｜Jj的快乐小屋",
   },
-  description: "认真吃饭、攒下陪伴，把每一天的小事兑换成我们的快乐。",
+  description: "记录今天的心情、吃饭、愿望与纪念日，把两个人的小事收藏成快乐。",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

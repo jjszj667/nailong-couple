@@ -6,13 +6,13 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin, requireUser } from "@/lib/auth";
 import { getCheckinWindow } from "@/lib/checkin-windows";
-import type { CheckinType, ProductCategory, ProductStatus } from "@/types/database";
+import type { CheckinType, MoodValue, ProductCategory, ProductStatus, ProductType, WishCategory, WishStatus } from "@/types/database";
 
 const imageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const maxImageSize = 5 * 1024 * 1024;
 
 function target(path: string, kind: "ok" | "error", message: string) {
-  return `${path}?${kind}=${encodeURIComponent(message)}`;
+  return `${path}${path.includes("?") ? "&" : "?"}${kind}=${encodeURIComponent(message)}`;
 }
 
 function errorText(error: unknown) {
@@ -33,6 +33,14 @@ function errorText(error: unknown) {
     INVALID_IMAGE_PATH: "照片路径校验失败，请重新上传。",
     CHECKIN_WINDOW_CLOSED_LUNCH: "午间签到只在每天 11:00–13:00 开放。",
     CHECKIN_WINDOW_CLOSED_DINNER: "晚间签到只在每天 16:00–22:00 开放。",
+    INVALID_MOOD_DATE: "不能记录未来的心情。",
+    MOOD_NOTE_TOO_LONG: "心情备注不能超过 500 个字。",
+    TOO_MANY_MOOD_TAGS: "心情标签最多选择 8 个。",
+    INVALID_RESPONSE: "请填写 1～300 个字的回应。",
+    INVALID_REWARD: "回应奖励数量不正确。",
+    RESPONSE_REWARD_IMMUTABLE: "这次回应已经发过奖励，之后只能修改文字，不能重复改动奖励。",
+    MYSTERY_NOT_READY: "奶龙还在准备这个惊喜，请再等一下。",
+    MYSTERY_ALREADY_REVEALED: "这个惊喜已经揭晓，不能再修改啦。",
   };
   return Object.entries(map).find(([key]) => raw.includes(key))?.[1] ?? "操作没有成功，请稍后再试。";
 }
@@ -167,6 +175,8 @@ const productSchema = z.object({
   stock: z.coerce.number().int().nonnegative(),
   category: z.enum(["food", "date", "gift", "game", "special", "other"]),
   status: z.enum(["active", "inactive", "sold_out"]),
+  product_type: z.enum(["normal", "mystery"]),
+  mystery_hint: z.string().trim().max(300),
 });
 
 export async function saveProductAction(formData: FormData) {
@@ -191,14 +201,32 @@ export async function saveProductAction(formData: FormData) {
       stock: parsed.data.stock,
       category: parsed.data.category as ProductCategory,
       status: parsed.data.status as ProductStatus,
+      product_type: parsed.data.product_type as ProductType,
+      mystery_hint: parsed.data.mystery_hint,
       image_url: imagePath,
       is_hidden: formData.get("is_hidden") === "on",
       is_featured: formData.get("is_featured") === "on",
     };
     const result = id
-      ? await supabase.from("products").update(payload).eq("id", id)
-      : await supabase.from("products").insert(payload);
+      ? await supabase.from("products").update(payload).eq("id", id).select("id").single()
+      : await supabase.from("products").insert(payload).select("id").single();
     if (result.error) throw result.error;
+    const productId = id ?? String(result.data.id);
+    if (parsed.data.product_type === "mystery") {
+      const surpriseTitle = z.string().trim().min(1).max(100).safeParse(formData.get("surprise_title"));
+      const surpriseContent = z.string().trim().min(1).max(1000).safeParse(formData.get("surprise_content"));
+      if (!surpriseTitle.success || !surpriseContent.success) throw new Error("请填写惊喜箱的真实内容。");
+      const { profile } = await requireAdmin();
+      const mysteryResult = await supabase.from("product_mystery_details").upsert({
+        product_id: productId,
+        surprise_title: surpriseTitle.data,
+        surprise_content: surpriseContent.data,
+        updated_by: profile.id,
+      });
+      if (mysteryResult.error) throw mysteryResult.error;
+    } else {
+      await supabase.from("product_mystery_details").delete().eq("product_id", productId);
+    }
   } catch (error) {
     redirect(target(id ? `/admin/products/${id}` : "/admin/products/new", "error", errorText(error)));
   }
@@ -279,7 +307,7 @@ export async function toggleAnnouncementAction(formData: FormData) {
 
 export async function updateSettingsAction(formData: FormData) {
   await requireAdmin();
-  const keys = ["lunch_reward", "dinner_reward", "daily_complete_reward", "streak_7_reward", "streak_30_reward"];
+  const keys = ["lunch_reward", "dinner_reward", "daily_complete_reward", "streak_7_reward", "streak_30_reward", "mood_checkin_reward"];
   const updates = keys.map((key) => ({ key, value: Number(formData.get(key)) }));
   if (updates.some((item) => !Number.isInteger(item.value) || item.value < 0)) {
     redirect(target("/admin/settings", "error", "奖励数量必须是大于等于 0 的整数。"));
@@ -291,4 +319,271 @@ export async function updateSettingsAction(formData: FormData) {
   if (error) redirect(target("/admin/settings", "error", errorText(error)));
   revalidatePath("/", "layout");
   redirect(target("/admin/settings", "ok", "签到奖励规则已经生效。"));
+}
+
+const moodValues = ["very_unpleasant", "unpleasant", "slightly_unpleasant", "neutral", "slightly_pleasant", "pleasant", "very_pleasant"] as const;
+
+export async function saveMoodAction(formData: FormData) {
+  await requireUser();
+  const parsed = z.object({
+    date: z.iso.date(),
+    value: z.enum(moodValues),
+    note: z.string().trim().max(500),
+  }).safeParse({
+    date: formData.get("date"),
+    value: formData.get("value"),
+    note: formData.get("note") || "",
+  });
+  const returnTo = String(formData.get("return_to") || "/");
+  if (!parsed.success) redirect(target(returnTo, "error", "请选择心情，并检查备注内容。"));
+  const tags = formData.getAll("tags").map(String).filter(Boolean).slice(0, 8);
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("save_mood", {
+    p_mood_date: parsed.data.date,
+    p_value: parsed.data.value as MoodValue,
+    p_tags: tags,
+    p_note: parsed.data.note,
+  });
+  if (error) redirect(target(returnTo, "error", errorText(error)));
+  const result = data as { rewarded?: boolean; reward?: number } | null;
+  const rewarded = Boolean(result?.rewarded);
+  revalidatePath("/", "layout");
+  redirect(target(returnTo, "ok", rewarded ? `今天的心情已收藏，+${result?.reward ?? 0} 奶龙币到账啦！` : "心情已经更新。"));
+}
+
+export async function respondToMoodAction(formData: FormData) {
+  await requireAdmin();
+  const responseContent = String(formData.get("content") || "").trim() || String(formData.get("quick_content") || "").trim();
+  const parsed = z.object({
+    moodId: z.uuid(),
+    content: z.string().trim().min(1).max(300),
+    reward: z.coerce.number().int().min(0).max(100000),
+  }).safeParse({ moodId: formData.get("mood_id"), content: responseContent, reward: formData.get("coin_reward") || 0 });
+  if (!parsed.success) redirect(target("/admin/moods", "error", "请填写回应内容，并检查奖励数量。"));
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("respond_to_mood", {
+    p_mood_id: parsed.data.moodId,
+    p_content: parsed.data.content,
+    p_coin_reward: parsed.data.reward,
+  });
+  if (error) redirect(target("/admin/moods", "error", errorText(error)));
+  revalidatePath("/", "layout");
+  redirect(target("/admin/moods", "ok", "回应已经送到她的首页。"));
+}
+
+export async function saveDailyNoteAction(formData: FormData) {
+  const { profile } = await requireUser();
+  const parsed = z.object({ date: z.iso.date(), content: z.string().trim().min(1).max(240) }).safeParse({
+    date: formData.get("date"), content: formData.get("content"),
+  });
+  const returnTo = String(formData.get("return_to") || "/");
+  if (!parsed.success) redirect(target(returnTo, "error", "今日一句需要是 1～240 个字。"));
+  const supabase = await createClient();
+  const { error } = await supabase.from("daily_notes").upsert({
+    user_id: profile.id, note_date: parsed.data.date, content: parsed.data.content,
+  }, { onConflict: "user_id,note_date" });
+  if (error) redirect(target(returnTo, "error", errorText(error)));
+  revalidatePath("/", "layout");
+  redirect(target(returnTo, "ok", "这句话已经留在今天啦。"));
+}
+
+export async function saveCalendarEventAction(formData: FormData) {
+  const { profile } = await requireUser();
+  const parsed = z.object({
+    id: z.union([z.literal(""), z.uuid()]).optional(),
+    title: z.string().trim().min(1).max(80),
+    eventDate: z.iso.date(),
+    eventType: z.string().trim().min(1).max(30),
+    note: z.string().trim().max(800),
+    repeatType: z.enum(["none", "yearly"]),
+  }).safeParse({
+    id: formData.get("id") || "", title: formData.get("title"), eventDate: formData.get("event_date"),
+    eventType: formData.get("event_type") || "special", note: formData.get("note") || "", repeatType: formData.get("repeat_type") || "none",
+  });
+  const returnTo = String(formData.get("return_to") || "/calendar");
+  if (!parsed.success) redirect(target(returnTo, "error", "请检查纪念日标题、日期和备注。"));
+  const supabase = await createClient();
+  const payload = {
+    title: parsed.data.title, event_date: parsed.data.eventDate, event_type: parsed.data.eventType,
+    note: parsed.data.note, repeat_type: parsed.data.repeatType,
+  };
+  const result = parsed.data.id
+    ? await supabase.from("calendar_events").update(payload).eq("id", parsed.data.id)
+    : await supabase.from("calendar_events").insert({ ...payload, created_by: profile.id });
+  if (result.error) redirect(target(returnTo, "error", errorText(result.error)));
+  revalidatePath("/", "layout");
+  redirect(target(returnTo, "ok", parsed.data.id ? "纪念日已经更新。" : "这个特别的日子已经收藏。"));
+}
+
+export async function deleteCalendarEventAction(formData: FormData) {
+  await requireUser();
+  const id = z.uuid().safeParse(formData.get("event_id"));
+  const returnTo = String(formData.get("return_to") || "/calendar");
+  if (!id.success) redirect(target(returnTo, "error", "没有找到这个纪念日。"));
+  const supabase = await createClient();
+  const { error } = await supabase.from("calendar_events").delete().eq("id", id.data);
+  if (error) redirect(target(returnTo, "error", errorText(error)));
+  revalidatePath("/", "layout");
+  redirect(target(returnTo, "ok", "这个纪念日已经删除。"));
+}
+
+async function uploadLifeImage(file: File, userId: string, folder: string) {
+  validateImage(file);
+  const supabase = await createClient();
+  const path = `${userId}/${folder}/${crypto.randomUUID()}.${extensionFor(file)}`;
+  const { error } = await supabase.storage.from("life-images").upload(path, file, { contentType: file.type, upsert: false });
+  if (error) throw error;
+  return path;
+}
+
+export async function saveWishAction(formData: FormData) {
+  const { profile } = await requireUser();
+  const parsed = z.object({
+    id: z.union([z.literal(""), z.uuid()]).optional(),
+    title: z.string().trim().min(1).max(100),
+    description: z.string().trim().max(800),
+    category: z.enum(["food", "travel", "gift", "activity", "movie", "other"]),
+    status: z.enum(["active", "completed", "archived"]),
+  }).safeParse({
+    id: formData.get("id") || "", title: formData.get("title"), description: formData.get("description") || "",
+    category: formData.get("category") || "other", status: formData.get("status") || "active",
+  });
+  if (!parsed.success) redirect(target("/wishes", "error", "请检查愿望名称和内容。"));
+  const supabase = await createClient();
+  let imageUrl = String(formData.get("existing_image") || "") || null;
+  const file = formData.get("image");
+  try {
+    if (file instanceof File && file.size > 0) imageUrl = await uploadLifeImage(file, profile.id, "wishes");
+    const payload = {
+      user_id: profile.id, title: parsed.data.title, description: parsed.data.description,
+      category: parsed.data.category as WishCategory, status: parsed.data.status as WishStatus, image_url: imageUrl,
+      completed_at: parsed.data.status === "completed" ? new Date().toISOString() : null,
+    };
+    const result = parsed.data.id ? await supabase.from("wishes").update(payload).eq("id", parsed.data.id) : await supabase.from("wishes").insert(payload);
+    if (result.error) throw result.error;
+  } catch (error) {
+    redirect(target("/wishes", "error", errorText(error)));
+  }
+  revalidatePath("/", "layout");
+  redirect(target("/wishes", "ok", parsed.data.status === "completed" ? "愿望实现啦 ❤️" : "愿望已经收进清单。"));
+}
+
+export async function deleteWishAction(formData: FormData) {
+  await requireUser();
+  const id = z.uuid().safeParse(formData.get("wish_id"));
+  if (!id.success) redirect(target("/wishes", "error", "没有找到这个愿望。"));
+  const supabase = await createClient();
+  const { error } = await supabase.from("wishes").delete().eq("id", id.data);
+  if (error) redirect(target("/wishes", "error", errorText(error)));
+  revalidatePath("/wishes");
+  redirect(target("/wishes", "ok", "愿望已经移出清单。"));
+}
+
+export async function updateWishAdminMetaAction(formData: FormData) {
+  const { profile } = await requireAdmin();
+  const parsed = z.object({ wishId: z.uuid(), status: z.enum(["not_started", "preparing", "ready"]), note: z.string().trim().max(800) }).safeParse({
+    wishId: formData.get("wish_id"), status: formData.get("status"), note: formData.get("secret_note") || "",
+  });
+  if (!parsed.success) redirect(target("/admin/wishes", "error", "请检查秘密准备状态和备注。"));
+  const supabase = await createClient();
+  const { error } = await supabase.from("wish_admin_meta").upsert({
+    wish_id: parsed.data.wishId, status: parsed.data.status, secret_note: parsed.data.note, updated_by: profile.id,
+  });
+  if (error) redirect(target("/admin/wishes", "error", errorText(error)));
+  redirect(target("/admin/wishes", "ok", "秘密准备状态已经保存，她看不到这里的内容。"));
+}
+
+export async function adminCompleteWishAction(formData: FormData) {
+  await requireAdmin();
+  const id = z.uuid().safeParse(formData.get("wish_id"));
+  if (!id.success) redirect(target("/admin/wishes", "error", "没有找到这个愿望。"));
+  const supabase = await createClient();
+  const { error } = await supabase.from("wishes").update({ status: "completed", completed_at: new Date().toISOString() }).eq("id", id.data);
+  if (error) redirect(target("/admin/wishes", "error", errorText(error)));
+  revalidatePath("/wishes");
+  redirect(target("/admin/wishes", "ok", "愿望已公开标记为实现，她会看到『愿望实现啦』。"));
+}
+
+export async function saveRelationshipAction(formData: FormData) {
+  const { profile } = await requireAdmin();
+  const parsed = z.object({ title: z.string().trim().min(1).max(30), startDate: z.iso.date() }).safeParse({
+    title: formData.get("relationship_title"), startDate: formData.get("relationship_start_date"),
+  });
+  if (!parsed.success) redirect(target("/admin/settings", "error", "请填写关系标题和开始日期。"));
+  const supabase = await createClient();
+  const { error } = await supabase.from("relationship_settings").upsert({
+    id: true, title: parsed.data.title, start_date: parsed.data.startDate, updated_by: profile.id,
+  });
+  if (error) redirect(target("/admin/settings", "error", errorText(error)));
+  revalidatePath("/", "layout");
+  redirect(target("/admin/settings", "ok", "我们的纪念日设置已经更新。"));
+}
+
+export async function prepareMysteryOrderAction(formData: FormData) {
+  await requireAdmin();
+  const parsed = z.object({
+    orderId: z.uuid(), title: z.string().trim().min(1).max(100), content: z.string().trim().min(1).max(1000), message: z.string().trim().max(800),
+  }).safeParse({ orderId: formData.get("order_id"), title: formData.get("surprise_title"), content: formData.get("surprise_content"), message: formData.get("admin_message") || "" });
+  if (!parsed.success) redirect(target("/admin/mysteries", "error", "请填写惊喜名称和真实内容。"));
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("prepare_mystery_order", {
+    p_order_id: parsed.data.orderId, p_surprise_title: parsed.data.title, p_surprise_content: parsed.data.content,
+    p_admin_message: parsed.data.message, p_reveal_image_url: null,
+  });
+  if (error) redirect(target("/admin/mysteries", "error", errorText(error)));
+  revalidatePath("/orders", "layout");
+  redirect(target("/admin/mysteries", "ok", "惊喜准备好了，她现在可以亲手揭晓。"));
+}
+
+export async function revealMysteryOrderAction(formData: FormData) {
+  await requireUser();
+  const id = z.uuid().safeParse(formData.get("order_id"));
+  if (!id.success) redirect(target("/orders", "error", "没有找到这个惊喜订单。"));
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("reveal_mystery_order", { p_order_id: id.data });
+  if (error) redirect(target(`/orders/${id.data}`, "error", errorText(error)));
+  revalidatePath(`/orders/${id.data}`);
+  redirect(target(`/orders/${id.data}`, "ok", "惊喜揭晓啦 ❤️"));
+}
+
+export async function savePlaceAction(formData: FormData) {
+  const { profile } = await requireUser();
+  const parsed = z.object({
+    id: z.union([z.literal(""), z.uuid()]).optional(), title: z.string().trim().min(1).max(100),
+    placeName: z.string().trim().min(1).max(120), visitDate: z.iso.date(), description: z.string().trim().max(1000),
+    placeType: z.string().trim().min(1).max(30), latitude: z.union([z.literal(""), z.coerce.number().min(-90).max(90)]), longitude: z.union([z.literal(""), z.coerce.number().min(-180).max(180)]),
+  }).safeParse({
+    id: formData.get("id") || "", title: formData.get("title"), placeName: formData.get("place_name"), visitDate: formData.get("visit_date"),
+    description: formData.get("description") || "", placeType: formData.get("place_type") || "other", latitude: formData.get("latitude") || "", longitude: formData.get("longitude") || "",
+  });
+  if (!parsed.success) redirect(target("/places", "error", "请检查地点名称、日期和经纬度。"));
+  const supabase = await createClient();
+  let imageUrl = String(formData.get("existing_image") || "") || null;
+  const file = formData.get("image");
+  try {
+    if (file instanceof File && file.size > 0) imageUrl = await uploadLifeImage(file, profile.id, "places");
+    const payload = {
+      title: parsed.data.title, place_name: parsed.data.placeName, visit_date: parsed.data.visitDate,
+      description: parsed.data.description, place_type: parsed.data.placeType,
+      latitude: parsed.data.latitude === "" ? null : parsed.data.latitude, longitude: parsed.data.longitude === "" ? null : parsed.data.longitude,
+      image_url: imageUrl, created_by: profile.id,
+    };
+    const result = parsed.data.id ? await supabase.from("places").update(payload).eq("id", parsed.data.id) : await supabase.from("places").insert(payload);
+    if (result.error) throw result.error;
+  } catch (error) {
+    redirect(target("/places", "error", errorText(error)));
+  }
+  revalidatePath("/places");
+  redirect(target("/places", "ok", "这个地方已经留在我们的足迹里。"));
+}
+
+export async function deletePlaceAction(formData: FormData) {
+  await requireUser();
+  const id = z.uuid().safeParse(formData.get("place_id"));
+  if (!id.success) redirect(target("/places", "error", "没有找到这个足迹。"));
+  const supabase = await createClient();
+  const { error } = await supabase.from("places").delete().eq("id", id.data);
+  if (error) redirect(target("/places", "error", errorText(error)));
+  revalidatePath("/places");
+  redirect(target("/places", "ok", "这条足迹已经删除。"));
 }

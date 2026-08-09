@@ -1,6 +1,6 @@
 # Jj的快乐小屋
 
-一个只供两个人使用的情侣陪伴与奖励兑换网站。普通用户通过每天完成午间、晚间限时照片签到获得“奶龙币”，再用奶龙币申请兑换管理员上架的约会、陪伴与小礼物奖励。它不是前端演示：登录、图片、钱包、流水、兑换、审核与权限均落在 Supabase，关键资金操作由 PostgreSQL 原子函数完成。
+一个只供两个人使用的情侣生活记录与奖励兑换小世界。普通用户可以记录吃饭、心情、每日一句、纪念日、愿望与足迹，并用“奶龙币”兑换约会、陪伴、小礼物和惊喜箱。登录、图片、钱包、流水、生活记录、兑换、审核与权限均落在 Supabase，关键资金操作由 PostgreSQL 原子函数完成。
 
 ## 已实现功能
 
@@ -16,6 +16,15 @@
 - 管理员主动发放或扣除奶龙币（强制原因、禁止负余额、同步流水）
 - 吃饭照片墙、日期筛选、午间/晚间标签和图片放大
 - 首页留言、个人昵称与头像、移动端底部导航
+- 固定五栏 Bottom Navigation：首页、签到、商店、日历、我的
+- 每日 7 档心情、可选标签与备注；北京时间当天首次记录按后台规则奖励一次
+- 管理员心情回应与一次性可选发币
+- 统一情侣日历、历史 Day Detail、纪念日/年度重复、今日一句与奶龙日报
+- 关系开始日期与“我们第 X 天”自动计算
+- 愿望清单与管理员独立秘密准备状态
+- 惊喜箱商品、后台准备、用户主动揭晓与轻量动画
+- 基于真实签到、心情、钱包、订单、纪念日和愿望数据的情侣成就
+- 地点卡片、照片、时间轴与可选经纬度足迹
 - Loading、空状态、错误提示和重复提交保护
 
 ## 技术栈
@@ -41,6 +50,8 @@ lib/
   supabase/               浏览器、服务端和 Proxy 客户端
   auth.ts                 当前用户、管理员校验
   data.ts                 只在服务端使用的数据访问层
+  life-data.ts            V2 生活记录数据访问层
+  life.ts                 上海日期、心情与纪念日计算
 supabase/migrations/      数据库、RLS、RPC、Storage 完整迁移
 types/                    领域类型
 public/nailong/           可集中替换的奶龙占位素材
@@ -74,8 +85,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=你的-anon-key
 
 1. 在 [Supabase](https://supabase.com/) 新建项目，妥善保存数据库密码。
 2. 打开 **SQL Editor → New query**。
-3. 复制 [`supabase/migrations/202608090001_initial_schema.sql`](supabase/migrations/202608090001_initial_schema.sql) 的全部内容并运行一次。
-4. 迁移会创建表、枚举、外键、索引、约束、触发器、RLS、策略、原子 RPC、默认商品、默认规则和三个 Storage bucket。
+3. 全新数据库先运行 [`supabase/migrations/202608090001_initial_schema.sql`](supabase/migrations/202608090001_initial_schema.sql)。
+4. 然后按文件名顺序运行 [`supabase/migrations/202608100001_checkin_windows.sql`](supabase/migrations/202608100001_checkin_windows.sql) 与 [`supabase/migrations/202608100002_life_world_v2.sql`](supabase/migrations/202608100002_life_world_v2.sql)。
+5. 已经在使用的数据库不要重复运行初始迁移，只运行尚未执行的增量 migration。
 
 也可以使用 Supabase CLI：
 
@@ -100,6 +112,18 @@ npx supabase db push
 - `system_settings`
 - `announcements`
 - `admin_logs`
+- `relationship_settings`
+- `moods`
+- `mood_responses`
+- `daily_notes`
+- `calendar_events`
+- `wishes`
+- `wish_admin_meta`
+- `product_mystery_details`
+- `order_mystery_details`
+- `achievement_definitions`
+- `user_achievements`
+- `places`
 
 ### Storage
 
@@ -108,6 +132,7 @@ npx supabase db push
 - `checkin-images`：私有；本人可上传和读取，管理员可读取
 - `product-images`：公开读取；仅管理员可写
 - `avatars`：公开读取；用户只能写自己 UUID 文件夹
+- `life-images`：仅登录后的两人可读取；用户写自己的 UUID 文件夹，管理员可管理
 
 三者均限制为 JPG/JPEG、PNG、WebP，最大 5MB。无需在 Dashboard 手动重复创建。
 
@@ -200,6 +225,8 @@ npm run start
 ## 六、安全与一致性说明
 
 - 普通用户不能直接写 `wallet_balances`、`wallet_transactions`、`orders` 或 `checkins`；这些表没有客户端写策略。
+- `moods` 只能通过数据库原子函数保存；奖励领取由 `reward_claims` 的三字段唯一约束保证并发幂等。
+- `wish_admin_meta` 与 `product_mystery_details` 只允许管理员读取；惊喜订单详情只有揭晓后才允许订单所有者读取。
 - 签到、冻结、批准、拒绝、取消、完成、管理员发币都通过 `SECURITY DEFINER` RPC，函数内部再次检查 `auth.uid()` 和角色。
 - 钱包行和商品行使用 `FOR UPDATE` 锁；余额、冻结额、库存有非负约束。
 - 每次签到与兑换带随机请求 UUID，并有唯一约束；网络重试不会重复发币或重复建单。
@@ -246,8 +273,10 @@ npm run start
 
 ## 当前已知限制
 
-- 第一版只实现午间和晚间两个限时签到，不包含早餐、运动、心情、抽奖、成就等预留功能。
-- 照片墙采用稳定的时间流与日期筛选，暂未做完整月历视图。
+- 心情中央形象暂时复用统一奶龙 placeholder，并通过表情与颜色区分 7 档；可在 `public/nailong/moods/` 后续逐档替换。
+- 足迹第一版保存可选经纬度，但不接第三方地图 API。
+- 奶龙日报实时聚合，不生成图片文件；结构已为以后导出卡片预留。
+- 惊喜揭晓图片字段已预留，当前后台先支持文字惊喜与留言。
 - 没有自动图片压缩；客户端和 Storage 都限制 5MB。
-- 没有找回密码页面；两人站点可先由 Supabase Dashboard 管理账号，之后再按需接入邮件回调。
-- 只有接入真实 Supabase 项目后，才能进行端到端登录、上传和并发数据库验收；无凭据时可完成静态编译检查。
+- 没有找回密码页面；两人站点可先由 Supabase Dashboard 管理账号。
+- V2 migration 执行后才能进行真实的 RLS、并发奖励和跨账号端到端验收。

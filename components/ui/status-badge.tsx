@@ -12,6 +12,11 @@ const labels: Record<string, string> = {
   sold_out: "已兑完",
   lunch: "午间",
   dinner: "晚间",
+  preparing: "偷偷准备中",
+  ready: "可以揭晓",
+  revealed: "已揭晓",
+  normal: "普通商品",
+  mystery: "惊喜箱",
 };
 
 export function StatusBadge({ status }: { status: string }) {

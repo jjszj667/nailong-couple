@@ -1,9 +1,17 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ShieldCheck } from "lucide-react";
+import { CalendarDays, Camera, Home, ShieldCheck, ShoppingBag } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import type { Profile } from "@/types/database";
 import { MediaImage } from "@/components/ui/media-image";
 import { getPublicImageUrl } from "@/lib/utils";
+
+const desktopItems: { href: string; label: string; icon: LucideIcon }[] = [
+  { href: "/", label: "首页", icon: Home },
+  { href: "/checkin", label: "签到", icon: Camera },
+  { href: "/shop", label: "商店", icon: ShoppingBag },
+  { href: "/calendar", label: "日历", icon: CalendarDays },
+];
 
 export function AppHeader({ profile }: { profile: Profile }) {
   const avatar = getPublicImageUrl("avatars", profile.avatar_url);
@@ -14,6 +22,13 @@ export function AppHeader({ profile }: { profile: Profile }) {
           <Image src="/nailong/nailong-3d.png" alt="" width={34} height={34} className="size-9 object-contain" />
           <span>Jj的快乐小屋</span>
         </Link>
+        <nav className="hidden items-center gap-1 md:flex" aria-label="桌面导航">
+          {desktopItems.map(({ href, label, icon: Icon }) => (
+            <Link key={href} href={href} className="flex min-h-10 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-muted transition hover:bg-amber-100 hover:text-brown">
+              <Icon className="size-4 text-nailong-deep" />{label}
+            </Link>
+          ))}
+        </nav>
         <div className="flex items-center gap-2.5">
           {profile.role === "admin" && (
             <Link href="/admin" className="hidden items-center gap-1.5 rounded-full bg-brown px-3 py-1.5 text-xs font-semibold text-white sm:flex">

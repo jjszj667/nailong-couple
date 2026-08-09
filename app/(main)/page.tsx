@@ -1,79 +1,82 @@
-import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Camera, Check, Clock3, Coins, Snowflake, Sparkles, Utensils } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, CalendarDays, Camera, Check, Clock3, Heart, MessageCircleHeart, NotebookPen, Sparkles, Utensils } from "lucide-react";
 import { getUserOverview } from "@/lib/data";
+import { getHomeLifeData } from "@/lib/life-data";
+import { anniversaryYears, moodMeta } from "@/lib/life";
+import { saveDailyNoteAction } from "@/app/actions";
 import { Card } from "@/components/ui/card";
 import { Coin } from "@/components/ui/coin";
-import { StatusBadge } from "@/components/ui/status-badge";
+import { Flash } from "@/components/ui/flash";
 import { MediaImage } from "@/components/ui/media-image";
-import { getCheckinWindow } from "@/lib/checkin-windows";
-import { formatDate, getPublicImageUrl } from "@/lib/utils";
-import type { CheckinType } from "@/types/database";
+import { MoodSelector } from "@/components/mood-selector";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { getPublicImageUrl } from "@/lib/utils";
 
-export default async function HomePage() {
-  const data = await getUserOverview();
-  const total = (data.wallet?.available_balance ?? 0) + (data.wallet?.frozen_balance ?? 0);
-  const closest = data.products.filter((item) => item.status === "active" && item.stock > 0).sort((a, b) => a.price - b.price).find((item) => item.price > (data.wallet?.available_balance ?? 0));
-  const meals: { type: CheckinType; label: string; done: boolean; icon: LucideIcon }[] = [
-    { type: "lunch", label: "午间限时签到", done: data.lunchDone, icon: Utensils },
-    { type: "dinner", label: "晚间限时签到", done: data.dinnerDone, icon: Clock3 },
-  ];
+export default async function HomePage({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string }> }) {
+  const [data, life, flash] = await Promise.all([getUserOverview(), getHomeLifeData(), searchParams]);
+  const balance = data.wallet?.available_balance ?? 0;
+  const total = balance + (data.wallet?.frozen_balance ?? 0);
+  const mood = life.mood ? moodMeta(life.mood.value) : null;
 
   return (
-    <main className="page-shell py-6 sm:py-9">
+    <main className="page-shell py-5 sm:py-9">
+      <Flash {...flash} />
       <section className="relative overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-[#f9d766] via-[#f6c84c] to-[#eeae32] p-6 shadow-[0_20px_45px_rgba(203,140,22,0.2)] sm:p-9">
         <div className="absolute -right-8 -top-12 size-52 rounded-full bg-white/20" />
-        <div className="relative grid items-center gap-5 sm:grid-cols-[1fr_auto]">
+        <div className="relative grid items-center gap-4 sm:grid-cols-[1fr_auto]">
           <div>
             <p className="text-sm font-bold text-brown/65">你好，{data.profile.nickname}</p>
             <h1 className="mt-2 max-w-xl text-2xl font-black leading-tight tracking-tight text-brown sm:text-4xl">奶龙提醒你：今天有好好吃饭吗？</h1>
-            <div className="mt-5 flex flex-wrap gap-2">
-              <Link href="/checkin" className="pill-button bg-white">去签到 <Camera className="size-4" /></Link>
-              <Link href="/shop" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-brown/15 bg-white/45 px-5 font-bold text-brown">看看奖励 <ArrowRight className="size-4" /></Link>
-            </div>
+            <div className="mt-4 flex flex-wrap items-center gap-3"><span className="rounded-full bg-white/55 px-4 py-2 text-sm font-bold text-brown">当前奶龙币 <strong className="ml-1 text-lg">{total}</strong></span><Link href="/checkin" className="pill-button bg-white">去签到 <Camera className="size-4" /></Link></div>
           </div>
-          <Image src="/nailong/nailong-3d.png" alt="张开双手开心抬脚的黄色奶龙形象" width={176} height={176} priority className="hidden size-44 object-contain drop-shadow-[0_16px_18px_rgba(119,72,8,0.2)] sm:block" />
+          <Image src="/nailong/nailong-3d.png" alt="开心的奶龙" width={176} height={176} priority className="mx-auto size-36 object-contain drop-shadow-[0_16px_18px_rgba(119,72,8,0.2)] sm:size-44" />
         </div>
       </section>
 
-      {data.announcement && (
-        <Card className="mt-5 flex items-start gap-3 border-amber-200 bg-amber-50/90 py-4">
-          <Sparkles className="mt-0.5 size-5 shrink-0 text-orange" />
-          <div><p className="text-xs font-bold uppercase tracking-wider text-nailong-deep">{data.announcement.title}</p><p className="mt-1 text-sm leading-6 text-brown">{data.announcement.content}</p></div>
+      {data.announcement && <Card className="mt-4 flex items-start gap-3 border-amber-200 bg-amber-50/90 py-4"><Sparkles className="mt-0.5 size-5 shrink-0 text-orange" /><div><p className="text-xs font-bold text-nailong-deep">{data.announcement.title}</p><p className="mt-1 text-sm leading-6 text-brown">{data.announcement.content}</p></div></Card>}
+
+      <section className="mt-5 grid gap-4 lg:grid-cols-[.8fr_1.2fr]">
+        <Card className="relative overflow-hidden bg-brown text-white">
+          <CalendarDays className="absolute -bottom-4 -right-3 size-28 text-white/5" />
+          <p className="text-xs font-bold text-nailong">OUR DAYS</p>
+          {life.relationshipDays ? <><h2 className="mt-2 text-2xl font-black">我们已经一起走过 {life.relationshipDays} 天啦</h2><p className="mt-2 text-sm text-white/65">{life.relationship?.title}的第 {life.relationshipDays} 天</p></> : <><h2 className="mt-2 text-xl font-black">我们的日子正在等一个开始日期</h2><p className="mt-2 text-sm text-white/65">管理员可以在设置中填写关系日期。</p></>}
         </Card>
-      )}
-
-      <section className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-brown text-white sm:col-span-2"><p className="text-sm text-white/70">当前奶龙币</p><div className="mt-2 text-4xl font-black tabular-nums">{total}</div><div className="mt-5 flex gap-5 text-xs text-white/70"><span className="flex items-center gap-1"><Coins className="size-3.5" />可用 {data.wallet?.available_balance ?? 0}</span><span className="flex items-center gap-1"><Snowflake className="size-3.5" />冻结 {data.wallet?.frozen_balance ?? 0}</span></div></Card>
-        <Card><p className="text-sm text-muted">当前连续签到</p><p className="mt-2 text-3xl font-black text-brown">{data.streak}<span className="ml-1 text-sm font-medium text-muted">天</span></p><p className="mt-4 text-xs text-muted">本月完整 {data.monthCompleteDays} 天</p></Card>
-        <Card><p className="text-sm text-muted">今日收获</p><p className="mt-2 text-3xl font-black text-nailong-deep">+{data.todayIncome}</p><p className="mt-4 text-xs text-muted">两个限时时段都完成还有额外奖励</p></Card>
-      </section>
-
-      <section className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_.8fr]">
-        <div>
-          <div className="mb-3 flex items-end justify-between"><div><p className="text-xs font-bold text-nailong-deep">TODAY</p><h2 className="text-xl font-black text-brown">今天的限时签到</h2></div><Link href="/checkin" className="text-sm font-semibold text-muted">去记录</Link></div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {meals.map(({ type, label, done, icon: Icon }) => {
-              const window = getCheckinWindow(type);
-              return (
-              <Card key={label} className={done ? "border-green-200 bg-green-50/80" : "border-amber-200 bg-amber-50/70"}>
-                <div className="flex items-center justify-between"><span className={`flex size-11 items-center justify-center rounded-2xl ${done ? "bg-green-600 text-white" : "bg-white text-nailong-deep"}`}><Icon className="size-5" /></span>{done ? <Check className="size-5 text-green-700" /> : <span className={`text-xs font-bold ${window.isOpen ? "text-green-700" : "text-amber-700"}`}>{window.isOpen ? "开放中" : "未到时间"}</span>}</div>
-                <p className="mt-4 text-lg font-black text-brown">{label}</p><p className="mt-1 text-sm font-medium text-nailong-deep">{window.timeLabel}</p><p className="mt-1 text-sm text-muted">{done ? "已经好好记录啦" : window.isOpen ? "现在可以上传照片签到" : "到点后再来记录这一餐"}</p>
-              </Card>
-              );
+        <Card>
+          <div className="flex items-center justify-between"><div><p className="text-xs font-bold text-nailong-deep">TODAY</p><h2 className="mt-1 text-xl font-black text-brown">今日签到</h2></div><Link href="/checkin" className="text-sm font-bold text-muted">去签到</Link></div>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            {[["午间", data.lunchDone, Utensils], ["晚间", data.dinnerDone, Clock3]].map(([label, done, Icon]) => {
+              const MealIcon = Icon as typeof Utensils;
+              return <div key={String(label)} className={`rounded-2xl p-4 ${done ? "bg-green-50" : "bg-amber-50"}`}><div className="flex items-center justify-between"><MealIcon className={`size-5 ${done ? "text-green-700" : "text-nailong-deep"}`} />{done ? <Check className="size-4 text-green-700" /> : <span className="text-xs text-muted">未完成</span>}</div><p className="mt-3 font-bold text-brown">{String(label)}签到</p></div>;
             })}
           </div>
-          <div className="mt-7 mb-3 flex items-end justify-between"><h2 className="text-xl font-black text-brown">为你推荐</h2><Link href="/shop" className="text-sm font-semibold text-muted">全部奖励</Link></div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {data.products.map((product) => <Link href={`/shop/${product.id}`} key={product.id}><Card className="group flex gap-4 p-4 transition hover:-translate-y-0.5"><MediaImage src={getPublicImageUrl("product-images", product.image_url)} alt={product.name} className="size-20 rounded-2xl" /><div className="min-w-0 flex-1"><p className="truncate font-bold text-brown">{product.name}</p><p className="mt-1 line-clamp-2 text-xs leading-5 text-muted">{product.description}</p><Coin value={product.price} className="mt-2 text-sm" /></div></Card></Link>)}
-          </div>
+          <p className="mt-3 text-sm text-muted">今日通过生活记录获得 <strong className="text-green-700">+{data.todayIncome}</strong> 奶龙币</p>
+        </Card>
+      </section>
+
+      <section className="mt-6 grid gap-6 lg:grid-cols-[1.15fr_.85fr]">
+        <div className="space-y-6">
+          <Card>
+            <div className="mb-4 flex items-center justify-between"><div><p className="text-xs font-bold text-nailong-deep">MOOD</p><h2 className="mt-1 text-xl font-black text-brown">我的心情</h2></div>{mood && <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-bold text-brown">{mood.emoji} {mood.label}</span>}</div>
+            {life.mood ? <div><div className="rounded-2xl bg-amber-50 p-4"><p className="font-bold text-brown">今天的心情：{mood?.label}</p>{life.mood.note && <p className="mt-2 text-sm leading-6 text-muted">{life.mood.note}</p>}{life.mood.tags.length > 0 && <div className="mt-3 flex flex-wrap gap-2">{life.mood.tags.map((tag) => <span key={tag} className="rounded-full bg-white px-2.5 py-1 text-xs text-muted">{tag}</span>)}</div>}</div><details className="mt-4"><summary className="cursor-pointer text-sm font-bold text-nailong-deep">编辑今天的心情</summary><div className="mt-4"><MoodSelector date={data.today} mood={life.mood} /></div></details></div> : <MoodSelector date={data.today} />}
+          </Card>
+
+          {life.response && <Card className="border-rose-200 bg-rose-50/80"><div className="flex gap-3"><MessageCircleHeart className="mt-0.5 size-6 shrink-0 text-rose-500" /><div><p className="text-xs font-bold text-rose-500">他回应了你今天的心情 ❤️</p><p className="mt-2 text-lg font-bold text-brown">{life.response.content}</p>{life.response.coin_reward > 0 && <p className="mt-2 text-sm text-muted">还偷偷塞给你 <Coin value={life.response.coin_reward} className="text-sm" /></p>}</div></div></Card>}
+
+          <Card>
+            <div className="flex items-center gap-3"><span className="flex size-10 items-center justify-center rounded-2xl bg-amber-100 text-nailong-deep"><NotebookPen className="size-5" /></span><div><h2 className="font-black text-brown">今日一句</h2><p className="text-xs text-muted">今天最想留下的一句话</p></div></div>
+            <form action={saveDailyNoteAction} className="mt-4"><input type="hidden" name="date" value={data.today} /><input type="hidden" name="return_to" value="/" /><textarea name="content" className="field min-h-24" maxLength={240} required defaultValue={life.note?.content ?? ""} placeholder="今天想留下什么？" /><SubmitButton className="mt-3" pendingText="正在保存…">{life.note ? "更新这句话" : "留在今天"}</SubmitButton></form>
+          </Card>
         </div>
 
         <div className="space-y-6">
-          <Card className="bg-gradient-to-br from-white to-amber-50"><p className="text-xs font-bold text-nailong-deep">下一个小目标</p><h2 className="mt-2 text-lg font-black text-brown">{closest ? `距离「${closest.name}」还差 ${closest.price - (data.wallet?.available_balance ?? 0)} 奶龙币` : "已经可以兑换喜欢的奖励啦！"}</h2><p className="mt-2 text-sm leading-6 text-muted">{closest ? "继续保持最近的吃饭节奏，很快就能遇见它。" : "去商城挑一件今天最想要的吧。"}</p></Card>
-          <div><div className="mb-3 flex items-end justify-between"><h2 className="text-xl font-black text-brown">最近兑换</h2><Link href="/orders" className="text-sm font-semibold text-muted">全部</Link></div><Card className="divide-y divide-line p-2">{data.orders.length ? data.orders.map((order) => <Link href={`/orders/${order.id}`} key={order.id} className="flex items-center justify-between gap-3 rounded-2xl p-3 hover:bg-amber-50"><div><p className="font-semibold text-brown">{order.product_name_snapshot}</p><p className="mt-1 text-xs text-muted">{formatDate(order.created_at, true)}</p></div><StatusBadge status={order.status} /></Link>) : <p className="p-5 text-center text-sm text-muted">还没有兑换记录，去看看有什么喜欢的吧。</p>}</Card></div>
-          <div><div className="mb-3 flex items-end justify-between"><h2 className="text-xl font-black text-brown">最近奶龙币</h2><Link href="/wallet" className="text-sm font-semibold text-muted">全部流水</Link></div><Card className="divide-y divide-line p-2">{data.transactions.length ? data.transactions.map((item) => <div key={item.id} className="flex items-center justify-between gap-3 p-3"><div className="min-w-0"><p className="truncate text-sm font-semibold text-brown">{item.reason}</p><p className="mt-1 text-xs text-muted">{formatDate(item.created_at, true)}</p></div><span className={`font-bold tabular-nums ${item.amount > 0 ? "text-green-700" : "text-brown"}`}>{item.amount > 0 ? "+" : ""}{item.amount}</span></div>) : <p className="p-5 text-center text-sm text-muted">第一枚奶龙币正在等你获得。</p>}</Card></div>
+          <Card className="bg-gradient-to-br from-white to-amber-50"><p className="text-xs font-bold text-nailong-deep">我们的日子</p>{life.upcoming ? <><h2 className="mt-2 text-xl font-black text-brown">{life.upcoming.daysAway === 0 ? `${life.upcoming.event.title}${anniversaryYears(life.upcoming.event, life.upcoming.occurrence) ? ` ${anniversaryYears(life.upcoming.event, life.upcoming.occurrence)} 周年` : ""}，就是今天 ❤️` : `距离${life.upcoming.event.title}${anniversaryYears(life.upcoming.event, life.upcoming.occurrence) ? ` ${anniversaryYears(life.upcoming.event, life.upcoming.occurrence)} 周年` : ""}还有 ${life.upcoming.daysAway} 天`}</h2><p className="mt-2 text-sm text-muted">点击日历看看这一天留下了什么。</p></> : <><h2 className="mt-2 text-xl font-black text-brown">还没有添加纪念日</h2><p className="mt-2 text-sm text-muted">把第一次见面、旅行和特别的一天收进日历吧。</p></>}<Link href="/calendar" className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-nailong-deep">打开日历 <ArrowRight className="size-4" /></Link></Card>
+
+          {life.wishes.length > 0 && <Card><div className="flex items-center justify-between"><h2 className="font-black text-brown">最近愿望</h2><Link href="/wishes" className="text-xs font-bold text-muted">全部</Link></div><div className="mt-3 space-y-2">{life.wishes.map((wish) => <div key={wish.id} className="flex items-center gap-2 rounded-2xl bg-amber-50 p-3"><Heart className="size-4 text-orange" /><span className="text-sm font-semibold text-brown">{wish.title}</span></div>)}</div></Card>}
+
+          <div><div className="mb-3 flex items-center justify-between"><h2 className="text-xl font-black text-brown">推荐兑换</h2><Link href="/shop" className="text-sm font-bold text-muted">全部</Link></div><div className="grid gap-3">{data.products.slice(0, 3).map((product) => <Link href={`/shop/${product.id}`} key={product.id}><Card className="flex gap-3 p-3 transition hover:-translate-y-0.5"><MediaImage src={getPublicImageUrl("product-images", product.image_url)} alt={product.name} className="size-16 rounded-2xl" /><div className="min-w-0 flex-1"><p className="truncate font-bold text-brown">{product.name}</p><p className="mt-1 line-clamp-1 text-xs text-muted">{product.product_type === "mystery" ? product.mystery_hint : product.description}</p><Coin value={product.price} className="mt-2 text-sm" /></div></Card></Link>)}</div></div>
+
+          <Card><div className="flex items-center gap-2"><Sparkles className="size-5 text-nailong-deep" /><h2 className="font-black text-brown">最近动态</h2></div><div className="mt-3 divide-y divide-line">{life.activities.slice(0, 2).map((item) => <div key={item.id} className="py-3"><p className="text-sm text-brown">{item.text}</p></div>)}{data.transactions.slice(0, 3).map((item) => <div key={item.id} className="flex items-center justify-between gap-3 py-3"><p className="min-w-0 truncate text-sm text-brown">{item.reason}</p><span className={`text-sm font-bold ${item.amount > 0 ? "text-green-700" : "text-muted"}`}>{item.amount > 0 ? "+" : ""}{item.amount}</span></div>)}</div>{data.transactions.length === 0 && life.activities.length === 0 && <p className="mt-3 text-sm text-muted">今天的小世界还很安静。</p>}</Card>
         </div>
       </section>
     </main>

@@ -9,6 +9,7 @@ import type {
   Order,
   OrderEvent,
   Product,
+  ProductMysteryDetails,
   Profile,
   SystemSetting,
   WalletBalance,
@@ -241,6 +242,13 @@ export async function getAdminProduct(id: string) {
   const supabase = await createClient();
   const { data } = await supabase.from("products").select("*").eq("id", id).maybeSingle();
   return data as Product | null;
+}
+
+export async function getAdminProductMysteryDetails(id: string) {
+  await requireAdmin();
+  const supabase = await createClient();
+  const { data } = await supabase.from("product_mystery_details").select("*").eq("product_id", id).maybeSingle();
+  return data as ProductMysteryDetails | null;
 }
 
 export async function getAdminOrders() {
