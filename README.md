@@ -86,8 +86,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=你的-anon-key
 1. 在 [Supabase](https://supabase.com/) 新建项目，妥善保存数据库密码。
 2. 打开 **SQL Editor → New query**。
 3. 全新数据库先运行 [`supabase/migrations/202608090001_initial_schema.sql`](supabase/migrations/202608090001_initial_schema.sql)。
-4. 然后按文件名顺序运行 [`supabase/migrations/202608100001_checkin_windows.sql`](supabase/migrations/202608100001_checkin_windows.sql) 与 [`supabase/migrations/202608100002_life_world_v2.sql`](supabase/migrations/202608100002_life_world_v2.sql)。
-5. 已经在使用的数据库不要重复运行初始迁移，只运行尚未执行的增量 migration。
+4. 然后运行 [`supabase/migrations/202608100002_life_world_v2.sql`](supabase/migrations/202608100002_life_world_v2.sql)；它包含当前正确的签到时间窗补丁和全部 V2 增量结构。
+5. 已经在使用的数据库不要重复运行初始迁移，也不需要补跑历史的 `202608100001_checkin_windows.sql`，只运行 `202608100002_life_world_v2.sql`。
 
 也可以使用 Supabase CLI：
 
