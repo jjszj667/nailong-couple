@@ -1,0 +1,14 @@
+import { adjustWalletAction } from "@/app/actions";
+import { getAdminWalletData } from "@/lib/data";
+import { formatDate } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
+import { Coin } from "@/components/ui/coin";
+import { Flash } from "@/components/ui/flash";
+import { SubmitButton } from "@/components/ui/submit-button";
+
+export default async function AdminWalletPage({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string }> }) {
+  const [data, flash] = await Promise.all([getAdminWalletData(), searchParams]);
+  return <div><div className="mb-5"><h2 className="text-xl font-black text-brown">奶龙币管理</h2><p className="mt-1 text-sm text-muted">正数为发放，负数为扣除；每次操作都会同时生成不可缺失的流水。</p></div><Flash {...flash} /><Card><h3 className="font-black text-brown">调整余额</h3>{data.profiles.length ? <form action={adjustWalletAction} className="mt-4 grid gap-4 sm:grid-cols-2"><label className="block text-sm font-semibold text-brown">用户<select name="user_id" className="field mt-2">{data.profiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.nickname}</option>)}</select></label><label className="block text-sm font-semibold text-brown">数量<input name="amount" type="number" step={1} className="field mt-2" placeholder="例如 30 或 -10" required /></label><label className="block text-sm font-semibold text-brown sm:col-span-2">原因<input name="reason" className="field mt-2" maxLength={100} placeholder="今天乖乖吃饭奖励" required /></label><label className="block text-sm font-semibold text-brown sm:col-span-2">留言（可选）<textarea name="note" className="field mt-2 min-h-20" maxLength={500} /></label><SubmitButton pendingText="正在更新余额…">确认调整</SubmitButton></form> : <p className="mt-4 text-sm text-muted">还没有普通用户账号，暂时无法调整。</p>}</Card>
+      <div className="mt-6 grid gap-3 sm:grid-cols-2">{data.profiles.map((profile) => { const wallet = data.wallets.find((item) => item.user_id === profile.id); return <Card key={profile.id}><p className="font-bold text-brown">{profile.nickname}</p><div className="mt-4 flex gap-6"><div><p className="text-xs text-muted">可用</p><Coin value={wallet?.available_balance ?? 0} className="mt-1" /></div><div><p className="text-xs text-muted">冻结</p><p className="mt-1 font-bold text-brown">{wallet?.frozen_balance ?? 0}</p></div></div></Card>; })}</div>
+      <div className="mt-7"><h3 className="mb-3 font-black text-brown">最近流水</h3><Card className="divide-y divide-line p-2">{data.transactions.map((item) => <div key={item.id} className="flex items-center gap-3 p-3"><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-brown">{item.reason}</p><p className="mt-1 text-xs text-muted">{formatDate(item.created_at, true)} · {item.type}</p></div><span className={`font-bold ${item.amount > 0 ? "text-green-700" : "text-brown"}`}>{item.amount > 0 ? "+" : ""}{item.amount}</span></div>)}</Card></div></div>;
+}
