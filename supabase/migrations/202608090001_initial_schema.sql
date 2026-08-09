@@ -312,6 +312,7 @@ as $$
 declare
   v_user uuid := auth.uid();
   v_today date := (now() at time zone 'Asia/Shanghai')::date;
+  v_local_time time := (now() at time zone 'Asia/Shanghai')::time;
   v_day date;
   v_checkin_id uuid;
   v_meal_reward integer;
@@ -324,6 +325,12 @@ declare
   v_complete boolean;
 begin
   if v_user is null then raise exception 'AUTH_REQUIRED'; end if;
+  if p_type = 'lunch' and not (v_local_time >= time '11:00' and v_local_time < time '13:00') then
+    raise exception 'CHECKIN_WINDOW_CLOSED_LUNCH';
+  end if;
+  if p_type = 'dinner' and not (v_local_time >= time '16:00' and v_local_time < time '22:00') then
+    raise exception 'CHECKIN_WINDOW_CLOSED_DINNER';
+  end if;
   if p_image_url is null or p_image_url = '' or split_part(p_image_url, '/', 1) <> v_user::text then
     raise exception 'INVALID_IMAGE_PATH';
   end if;
@@ -347,7 +354,7 @@ begin
 
   perform public.perform_wallet_change(
     v_user, v_meal_reward, 0, 'income', 'checkin_reward',
-    case p_type when 'lunch' then '午饭乖乖打卡' else '晚饭乖乖打卡' end,
+    case p_type when 'lunch' then '午间限时签到' else '晚间限时签到' end,
     null, v_checkin_id, v_user, null
   );
   v_total := v_total + v_meal_reward;
@@ -361,7 +368,7 @@ begin
     values (v_user, 'daily_complete', v_today, v_checkin_id, v_daily_reward)
     on conflict do nothing;
     if found and v_daily_reward > 0 then
-      perform public.perform_wallet_change(v_user, v_daily_reward, 0, 'income', 'daily_complete_reward', '今日两餐任务完成', null, v_checkin_id, v_user, null);
+      perform public.perform_wallet_change(v_user, v_daily_reward, 0, 'income', 'daily_complete_reward', '今日两个限时时段任务完成', null, v_checkin_id, v_user, null);
       v_total := v_total + v_daily_reward;
     end if;
 
@@ -612,9 +619,9 @@ grant execute on function public.admin_adjust_wallet(uuid, integer, text, text) 
 grant execute on function public.admin_update_settings(jsonb) to authenticated;
 
 insert into public.system_settings (key, value, label, description) values
-  ('lunch_reward', 5, '午饭签到奖励', '完成午饭照片签到后发放'),
-  ('dinner_reward', 5, '晚饭签到奖励', '完成晚饭照片签到后发放'),
-  ('daily_complete_reward', 5, '完整签到奖励', '同一天午饭和晚饭都完成后发放'),
+  ('lunch_reward', 5, '午间限时签到奖励', '每天 11:00–13:00 完成照片签到后发放'),
+  ('dinner_reward', 5, '晚间限时签到奖励', '每天 16:00–22:00 完成照片签到后发放'),
+  ('daily_complete_reward', 5, '完整签到奖励', '同一天午间和晚间限时签到都完成后发放'),
   ('streak_7_reward', 20, '连续 7 天奖励', '连续 7 个完整签到日后发放'),
   ('streak_30_reward', 100, '连续 30 天奖励', '连续 30 个完整签到日后发放');
 

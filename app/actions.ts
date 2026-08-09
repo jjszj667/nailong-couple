@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin, requireUser } from "@/lib/auth";
+import { getCheckinWindow } from "@/lib/checkin-windows";
 import type { CheckinType, ProductCategory, ProductStatus } from "@/types/database";
 
 const imageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -30,6 +31,8 @@ function errorText(error: unknown) {
     REASON_REQUIRED: "请填写清楚调整奶龙币的原因。",
     AMOUNT_CANNOT_BE_ZERO: "调整数量不能为 0。",
     INVALID_IMAGE_PATH: "照片路径校验失败，请重新上传。",
+    CHECKIN_WINDOW_CLOSED_LUNCH: "午间签到只在每天 11:00–13:00 开放。",
+    CHECKIN_WINDOW_CLOSED_DINNER: "晚间签到只在每天 16:00–22:00 开放。",
   };
   return Object.entries(map).find(([key]) => raw.includes(key))?.[1] ?? "操作没有成功，请稍后再试。";
 }
@@ -73,6 +76,11 @@ export async function submitCheckinAction(formData: FormData) {
   }
 
   try {
+    const checkinType = type as CheckinType;
+    const window = getCheckinWindow(checkinType);
+    if (!window.isOpen) {
+      throw new Error(checkinType === "lunch" ? "CHECKIN_WINDOW_CLOSED_LUNCH" : "CHECKIN_WINDOW_CLOSED_DINNER");
+    }
     validateImage(file);
     const supabase = await createClient();
     const path = `${profile.id}/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.${extensionFor(file)}`;
@@ -84,7 +92,7 @@ export async function submitCheckinAction(formData: FormData) {
     if (uploadError) throw uploadError;
 
     const { error } = await supabase.rpc("submit_checkin", {
-      p_type: type as CheckinType,
+      p_type: checkinType,
       p_image_url: path,
       p_request_id: requestId.data,
     });

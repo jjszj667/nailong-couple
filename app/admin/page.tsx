@@ -12,7 +12,7 @@ export const metadata = { title: "管理后台" };
 export default async function AdminPage() {
   const data = await getAdminDashboard();
   const stats = [
-    [Coins, "可用奶龙币", data.wallet?.available_balance ?? 0], [Snowflake, "冻结奶龙币", data.wallet?.frozen_balance ?? 0], [Flame, "当前连续签到", `${data.streak} 天`], [Camera, "本月完整签到", `${data.monthCompleteDays} 天`], [Utensils, "累计午饭 / 晚饭", `${data.lunchCount} / ${data.dinnerCount}`], [Coins, "累计发放 / 消费", `${data.totalGranted} / ${data.totalSpent}`], [ClipboardCheck, "累计兑换", data.orderCount], [ClipboardCheck, "待审核订单", data.pendingOrders],
+    [Coins, "可用奶龙币", data.wallet?.available_balance ?? 0], [Snowflake, "冻结奶龙币", data.wallet?.frozen_balance ?? 0], [Flame, "当前连续签到", `${data.streak} 天`], [Camera, "本月完整签到", `${data.monthCompleteDays} 天`], [Utensils, "累计午间 / 晚间", `${data.lunchCount} / ${data.dinnerCount}`], [Coins, "累计发放 / 消费", `${data.totalGranted} / ${data.totalSpent}`], [ClipboardCheck, "累计兑换", data.orderCount], [ClipboardCheck, "待审核订单", data.pendingOrders],
   ] as const;
   return (
     <div><div className="mb-5"><h2 className="text-xl font-black text-brown">今天也把小世界照顾好</h2><p className="mt-1 text-sm text-muted">{data.user ? `当前普通用户：${data.user.nickname}` : "还没有创建普通用户账号，请按 README 完成初始化。"}</p></div>

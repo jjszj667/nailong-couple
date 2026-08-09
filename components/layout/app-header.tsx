@@ -11,7 +11,7 @@ export function AppHeader({ profile }: { profile: Profile }) {
     <header className="sticky top-0 z-40 border-b border-line/70 bg-cream/85 backdrop-blur-xl">
       <div className="page-shell flex h-16 items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5 font-extrabold tracking-tight text-brown">
-          <Image src="/nailong/coin.svg" alt="" width={34} height={34} />
+          <Image src="/nailong/nailong-3d.png" alt="" width={34} height={34} className="size-9 object-contain" />
           <span>奶龙情侣点单站</span>
         </Link>
         <div className="flex items-center gap-2.5">

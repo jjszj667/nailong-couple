@@ -7,15 +7,17 @@ import { Card } from "@/components/ui/card";
 import { Coin } from "@/components/ui/coin";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { MediaImage } from "@/components/ui/media-image";
+import { getCheckinWindow } from "@/lib/checkin-windows";
 import { formatDate, getPublicImageUrl } from "@/lib/utils";
+import type { CheckinType } from "@/types/database";
 
 export default async function HomePage() {
   const data = await getUserOverview();
   const total = (data.wallet?.available_balance ?? 0) + (data.wallet?.frozen_balance ?? 0);
   const closest = data.products.filter((item) => item.status === "active" && item.stock > 0).sort((a, b) => a.price - b.price).find((item) => item.price > (data.wallet?.available_balance ?? 0));
-  const meals: { label: string; done: boolean; icon: LucideIcon }[] = [
-    { label: "午饭", done: data.lunchDone, icon: Utensils },
-    { label: "晚饭", done: data.dinnerDone, icon: Clock3 },
+  const meals: { type: CheckinType; label: string; done: boolean; icon: LucideIcon }[] = [
+    { type: "lunch", label: "午间限时签到", done: data.lunchDone, icon: Utensils },
+    { type: "dinner", label: "晚间限时签到", done: data.dinnerDone, icon: Clock3 },
   ];
 
   return (
@@ -31,7 +33,7 @@ export default async function HomePage() {
               <Link href="/shop" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-brown/15 bg-white/45 px-5 font-bold text-brown">看看奖励 <ArrowRight className="size-4" /></Link>
             </div>
           </div>
-          <Image src="/nailong/nailong-placeholder.svg" alt="自制奶龙风格占位形象" width={152} height={152} priority className="floaty hidden rounded-[2.6rem] shadow-lg sm:block" />
+          <Image src="/nailong/nailong-3d.png" alt="张开双手开心抬脚的黄色奶龙形象" width={176} height={176} priority className="hidden size-44 object-contain drop-shadow-[0_16px_18px_rgba(119,72,8,0.2)] sm:block" />
         </div>
       </section>
 
@@ -45,19 +47,22 @@ export default async function HomePage() {
       <section className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="bg-brown text-white sm:col-span-2"><p className="text-sm text-white/70">当前奶龙币</p><div className="mt-2 text-4xl font-black tabular-nums">{total}</div><div className="mt-5 flex gap-5 text-xs text-white/70"><span className="flex items-center gap-1"><Coins className="size-3.5" />可用 {data.wallet?.available_balance ?? 0}</span><span className="flex items-center gap-1"><Snowflake className="size-3.5" />冻结 {data.wallet?.frozen_balance ?? 0}</span></div></Card>
         <Card><p className="text-sm text-muted">当前连续签到</p><p className="mt-2 text-3xl font-black text-brown">{data.streak}<span className="ml-1 text-sm font-medium text-muted">天</span></p><p className="mt-4 text-xs text-muted">本月完整 {data.monthCompleteDays} 天</p></Card>
-        <Card><p className="text-sm text-muted">今日收获</p><p className="mt-2 text-3xl font-black text-nailong-deep">+{data.todayIncome}</p><p className="mt-4 text-xs text-muted">两餐都完成还有额外奖励</p></Card>
+        <Card><p className="text-sm text-muted">今日收获</p><p className="mt-2 text-3xl font-black text-nailong-deep">+{data.todayIncome}</p><p className="mt-4 text-xs text-muted">两个限时时段都完成还有额外奖励</p></Card>
       </section>
 
       <section className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_.8fr]">
         <div>
-          <div className="mb-3 flex items-end justify-between"><div><p className="text-xs font-bold text-nailong-deep">TODAY</p><h2 className="text-xl font-black text-brown">今天的两顿饭</h2></div><Link href="/checkin" className="text-sm font-semibold text-muted">去记录</Link></div>
+          <div className="mb-3 flex items-end justify-between"><div><p className="text-xs font-bold text-nailong-deep">TODAY</p><h2 className="text-xl font-black text-brown">今天的限时签到</h2></div><Link href="/checkin" className="text-sm font-semibold text-muted">去记录</Link></div>
           <div className="grid gap-3 sm:grid-cols-2">
-            {meals.map(({ label, done, icon: Icon }) => (
+            {meals.map(({ type, label, done, icon: Icon }) => {
+              const window = getCheckinWindow(type);
+              return (
               <Card key={label} className={done ? "border-green-200 bg-green-50/80" : "border-amber-200 bg-amber-50/70"}>
-                <div className="flex items-center justify-between"><span className={`flex size-11 items-center justify-center rounded-2xl ${done ? "bg-green-600 text-white" : "bg-white text-nailong-deep"}`}><Icon className="size-5" /></span>{done ? <Check className="size-5 text-green-700" /> : <span className="text-xs font-bold text-amber-700">等待打卡</span>}</div>
-                <p className="mt-4 text-lg font-black text-brown">{label}</p><p className="mt-1 text-sm text-muted">{done ? "已经好好吃过啦" : "拍张照片记录这一餐"}</p>
+                <div className="flex items-center justify-between"><span className={`flex size-11 items-center justify-center rounded-2xl ${done ? "bg-green-600 text-white" : "bg-white text-nailong-deep"}`}><Icon className="size-5" /></span>{done ? <Check className="size-5 text-green-700" /> : <span className={`text-xs font-bold ${window.isOpen ? "text-green-700" : "text-amber-700"}`}>{window.isOpen ? "开放中" : "未到时间"}</span>}</div>
+                <p className="mt-4 text-lg font-black text-brown">{label}</p><p className="mt-1 text-sm font-medium text-nailong-deep">{window.timeLabel}</p><p className="mt-1 text-sm text-muted">{done ? "已经好好记录啦" : window.isOpen ? "现在可以上传照片签到" : "到点后再来记录这一餐"}</p>
               </Card>
-            ))}
+              );
+            })}
           </div>
           <div className="mt-7 mb-3 flex items-end justify-between"><h2 className="text-xl font-black text-brown">为你推荐</h2><Link href="/shop" className="text-sm font-semibold text-muted">全部奖励</Link></div>
           <div className="grid gap-3 sm:grid-cols-2">

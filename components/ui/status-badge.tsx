@@ -10,8 +10,8 @@ const labels: Record<string, string> = {
   active: "已上架",
   inactive: "已下架",
   sold_out: "已兑完",
-  lunch: "午饭",
-  dinner: "晚饭",
+  lunch: "午间",
+  dinner: "晚间",
 };
 
 export function StatusBadge({ status }: { status: string }) {

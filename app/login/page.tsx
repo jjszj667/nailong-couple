@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import { Heart, KeyRound, Mail } from "lucide-react";
+import { Heart } from "lucide-react";
 import { loginAction } from "@/app/actions";
 import { getCurrentUser } from "@/lib/auth";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
@@ -20,7 +20,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <div className="relative flex min-h-72 flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[#fff3b8] to-[#f6c84c] p-8 text-center md:min-h-[38rem]">
           <div className="absolute -left-16 top-8 size-48 rounded-full bg-white/25" />
           <div className="absolute -right-16 bottom-8 size-56 rounded-full bg-orange/15" />
-          <Image src="/nailong/nailong-placeholder.svg" alt="自制奶龙风格占位形象" width={180} height={180} priority className="floaty relative rounded-[3rem] shadow-xl" />
+          <Image src="/nailong/nailong-3d.png" alt="张开双手开心抬脚的黄色奶龙形象" width={220} height={220} priority className="relative size-48 object-contain drop-shadow-[0_18px_22px_rgba(119,72,8,0.22)] md:size-56" />
           <h1 className="relative mt-6 text-3xl font-black tracking-tight text-brown">奶龙情侣点单站</h1>
           <p className="relative mt-3 max-w-xs leading-7 text-brown/75">把认真吃饭的小日常，慢慢攒成一起去做的开心事。</p>
         </div>
@@ -35,10 +35,10 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           {configured ? (
             <form action={loginAction} className="space-y-5">
               <label className="block text-sm font-semibold text-brown">邮箱
-                <span className="relative mt-2 block"><Mail className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" /><input className="field pl-11" type="email" name="email" autoComplete="email" required placeholder="you@example.com" /></span>
+                <input className="field mt-2" type="email" name="email" autoComplete="email" required placeholder="you@example.com" />
               </label>
               <label className="block text-sm font-semibold text-brown">密码
-                <span className="relative mt-2 block"><KeyRound className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" /><input className="field pl-11" type="password" name="password" autoComplete="current-password" required minLength={6} placeholder="输入密码" /></span>
+                <input className="field mt-2" type="password" name="password" autoComplete="current-password" required minLength={6} placeholder="输入密码" />
               </label>
               <SubmitButton className="w-full" pendingText="正在打开小世界…">登录</SubmitButton>
             </form>
