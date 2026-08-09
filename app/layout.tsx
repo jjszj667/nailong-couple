@@ -11,8 +11,8 @@ const notoSans = Noto_Sans_SC({
 
 export const metadata: Metadata = {
   title: {
-    default: "奶龙情侣点单站",
-    template: "%s｜奶龙情侣点单站",
+    default: "Jj的快乐小屋",
+    template: "%s｜Jj的快乐小屋",
   },
   description: "认真吃饭、攒下陪伴，把每一天的小事兑换成我们的快乐。",
 };

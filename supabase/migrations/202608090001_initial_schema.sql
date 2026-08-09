@@ -1,4 +1,4 @@
--- 奶龙情侣点单站：完整初始结构、RLS、Storage 与原子业务函数
+-- Jj的快乐小屋：完整初始结构、RLS、Storage 与原子业务函数
 -- 所有业务时间戳保存为 UTC；“今天/本月/连续天数”统一按 Asia/Shanghai 判断。
 
 create extension if not exists pgcrypto;

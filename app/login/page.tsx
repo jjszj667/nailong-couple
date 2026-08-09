@@ -21,7 +21,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <div className="absolute -left-16 top-8 size-48 rounded-full bg-white/25" />
           <div className="absolute -right-16 bottom-8 size-56 rounded-full bg-orange/15" />
           <Image src="/nailong/nailong-3d.png" alt="张开双手开心抬脚的黄色奶龙形象" width={220} height={220} priority className="relative size-48 object-contain drop-shadow-[0_18px_22px_rgba(119,72,8,0.22)] md:size-56" />
-          <h1 className="relative mt-6 text-3xl font-black tracking-tight text-brown">奶龙情侣点单站</h1>
+          <h1 className="relative mt-6 text-3xl font-black tracking-tight text-brown">Jj的快乐小屋</h1>
           <p className="relative mt-3 max-w-xs leading-7 text-brown/75">把认真吃饭的小日常，慢慢攒成一起去做的开心事。</p>
         </div>
 

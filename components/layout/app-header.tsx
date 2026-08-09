@@ -12,7 +12,7 @@ export function AppHeader({ profile }: { profile: Profile }) {
       <div className="page-shell flex h-16 items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5 font-extrabold tracking-tight text-brown">
           <Image src="/nailong/nailong-3d.png" alt="" width={34} height={34} className="size-9 object-contain" />
-          <span>奶龙情侣点单站</span>
+          <span>Jj的快乐小屋</span>
         </Link>
         <div className="flex items-center gap-2.5">
           {profile.role === "admin" && (
