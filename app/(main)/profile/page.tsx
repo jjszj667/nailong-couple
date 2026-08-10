@@ -12,6 +12,7 @@ import {
   LogOut,
   NotebookPen,
   ReceiptText,
+  ShieldCheck,
   Sparkles,
   UserRound,
 } from "lucide-react";
@@ -153,6 +154,24 @@ export default async function ProfilePage({
           </div>
         </div>
       </Card>
+
+      {data.profile.role === "admin" && (
+        <Link
+          href="/admin"
+          className="mt-4 flex min-h-16 items-center gap-3 rounded-[1.75rem] bg-brown px-4 py-3 text-white shadow-[0_12px_30px_rgba(91,69,39,0.2)] transition active:scale-[0.99]"
+        >
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-nailong text-brown">
+            <ShieldCheck className="size-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-black">进入管理后台</span>
+            <span className="block text-xs text-white/70">
+              管理订单、商品、签到、纪念日和设置
+            </span>
+          </span>
+          <ChevronRight className="size-5 text-white/70" />
+        </Link>
+      )}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_.8fr]">
         <div className="space-y-6">

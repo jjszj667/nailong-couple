@@ -31,8 +31,13 @@ export function AppHeader({ profile }: { profile: Profile }) {
         </nav>
         <div className="flex items-center gap-2.5">
           {profile.role === "admin" && (
-            <Link href="/admin" className="hidden items-center gap-1.5 rounded-full bg-brown px-3 py-1.5 text-xs font-semibold text-white sm:flex">
-              <ShieldCheck className="size-3.5" />管理后台
+            <Link
+              href="/admin"
+              aria-label="打开管理后台"
+              className="flex size-10 items-center justify-center rounded-full bg-brown text-white shadow-sm sm:size-auto sm:gap-1.5 sm:px-3 sm:py-1.5 sm:text-xs sm:font-semibold"
+            >
+              <ShieldCheck className="size-4 sm:size-3.5" />
+              <span className="hidden sm:inline">管理后台</span>
             </Link>
           )}
           <Link href="/profile" aria-label="个人中心">
