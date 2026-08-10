@@ -6,6 +6,7 @@ import { Coin } from "@/components/ui/coin";
 import { Card } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Flash } from "@/components/ui/flash";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export const metadata = { title: "我的兑换" };
 
@@ -53,14 +54,7 @@ export default async function OrdersPage({
           ))}
         </div>
       ) : (
-        <Card className="py-16 text-center">
-          <ReceiptText className="mx-auto size-10 text-nailong-deep" />
-          <h2 className="mt-4 font-bold text-brown">还没有兑换记录</h2>
-          <p className="mt-1 text-sm text-muted">去看看有什么喜欢的奖励吧。</p>
-          <Link href="/shop" className="pill-button mt-5">
-            逛逛商城
-          </Link>
-        </Card>
+        <EmptyState icon={ReceiptText} title="还没有兑换过东西" description="看到喜欢的奖励时再来。" size="lg" action={<Link href="/shop" className="pill-button">去商店看看</Link>} />
       )}
     </main>
   );

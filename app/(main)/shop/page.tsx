@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { MediaImage } from "@/components/ui/media-image";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Flash } from "@/components/ui/flash";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export const metadata = { title: "奖励商城" };
 
@@ -99,11 +100,7 @@ export default async function ShopPage({
           })}
         </section>
       ) : (
-        <Card className="py-16 text-center">
-          <ShoppingBag className="mx-auto size-10 text-nailong-deep" />
-          <h2 className="mt-4 font-bold text-brown">奖励架暂时空空的</h2>
-          <p className="mt-1 text-sm text-muted">等小屋里出现一些新惊喜吧。</p>
-        </Card>
+        <EmptyState icon={ShoppingBag} title="奖励小铺还没有上新" description="等管理员准备好新的快乐奖励，就会出现在这里。" size="lg" />
       )}
     </main>
   );

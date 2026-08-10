@@ -89,8 +89,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=你的-anon-key
 3. 全新数据库先运行 [`supabase/migrations/202608090001_initial_schema.sql`](supabase/migrations/202608090001_initial_schema.sql)。
 4. 然后运行 [`supabase/migrations/202608100002_life_world_v2.sql`](supabase/migrations/202608100002_life_world_v2.sql)；它包含当前正确的签到时间窗补丁和全部 V2 增量结构。
 5. 接着运行 [`supabase/migrations/202608100003_relationship_partners.sql`](supabase/migrations/202608100003_relationship_partners.sql)；它会增量加入情侣双方关联、昵称读取策略和首页聚合查询。
-6. 最后运行 [`supabase/migrations/202608100004_couple_space.sql`](supabase/migrations/202608100004_couple_space.sql)；它会加入双人生活记录读取权限、生活照片、故事事件和新版首页聚合查询。
-7. 已经运行过 `001`、`002`、`003` 的数据库不要重复执行它们，本次升级只需运行 `202608100004_couple_space.sql`。如果 `003` 尚未执行，则按 `003`、`004` 的顺序各执行一次。
+6. 运行 [`supabase/migrations/202608100004_couple_space.sql`](supabase/migrations/202608100004_couple_space.sql)；它会加入双人生活记录读取权限、生活照片、故事事件和新版首页聚合查询。
+7. 再运行 [`supabase/migrations/202608100005_image_storage_and_trash.sql`](supabase/migrations/202608100005_image_storage_and_trash.sql)；它只增量加入回收站字段、索引、管理策略与存储提醒设置，不会清空或改写已有照片。
+8. 已经执行过的 migration 不要重复运行或修改；现有项目本轮只需执行尚未执行的 `005`。
 
 也可以使用 Supabase CLI：
 
@@ -235,6 +236,7 @@ npm run start
 - 每次签到与兑换带随机请求 UUID，并有唯一约束；网络重试不会重复发币或重复建单。
 - 历史订单保存商品名称与价格快照，后续商品改价不会影响旧订单。
 - 所有 timestamp 保存为 UTC，业务日期明确用 `Asia/Shanghai` 转换。
+- Storage 隐私边界：`checkin-images` 与 `life-images` 保持私有，通过短时签名 URL 展示；`product-images` 为公开商品素材；`avatars` 目前为公开 bucket，以兼容登录后全站头像展示。头像可能涉及个人隐私，不要上传证件或敏感照片；若以后改为私有 bucket，需要同步改造头像签名 URL，不能只切换开关。
 
 ## 七、更换奶龙素材
 
@@ -260,7 +262,14 @@ npm run start
 
 ### 上传图片失败
 
-确认文件小于 5MB、格式为 JPG/JPEG、PNG 或 WebP，并确认初始 migration 已创建 Storage bucket 与策略。
+确认格式为 JPG/JPEG、PNG 或 WebP，并确认 migration 已创建 Storage bucket 与策略。浏览器会先自动缩放并压缩为 WebP（不支持时回退 JPEG）；HEIC 暂不伪装支持，请先在手机相册中转成兼容格式。
+
+### 数据与照片备份
+
+- Supabase 数据库与 Storage 是两部分，重要备份应同时包含两者。
+- 数据库可定期在 Supabase Dashboard 导出，或使用官方 CLI 执行数据库备份；Storage 可按 bucket 下载归档。
+- 建议每月一次，并在大批量清理前额外备份一次。先保留回收站 30 天，再由管理员在“后台 → 存储”手动清理。
+- “孤立文件扫描”默认只试运行；只有管理员二次确认后才会删除。软删除记录仍算有效引用，不会被误判为孤立文件。
 
 ### 管理员访问 `/admin` 被送回首页
 
@@ -280,6 +289,6 @@ npm run start
 - 足迹第一版保存可选经纬度，但不接第三方地图 API。
 - 奶龙日报实时聚合，不生成图片文件；结构已为以后导出卡片预留。
 - 惊喜揭晓图片字段已预留，当前后台先支持文字惊喜与留言。
-- 没有自动图片压缩；客户端和 Storage 都限制 5MB。
+- JPG、PNG、WebP 已在客户端按用途自动压缩；HEIC 暂不支持，且不会引入体积很大的解码依赖。
 - 没有找回密码页面；两人站点可先由 Supabase Dashboard 管理账号。
 - 最新 migration 执行后才能进行真实的双账号 RLS、生活照片和跨账号端到端验收。

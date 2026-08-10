@@ -184,6 +184,12 @@ export default async function HomePage({
               去签到
             </Link>
           </div>
+          {!data.lunchDone && !data.dinnerDone && (
+            <div className="mt-4 rounded-2xl bg-amber-50 p-4">
+              <p className="font-black text-brown">今天还没有签到</p>
+              <p className="mt-1 text-sm text-muted">吃完饭记得来留张照片。</p>
+            </div>
+          )}
           <div className="mt-4 grid grid-cols-2 gap-3">
             {[
               ["午间", data.lunchDone, Utensils],
@@ -274,7 +280,11 @@ export default async function HomePage({
                 </details>
               </div>
             ) : (
-              <MoodSelector date={data.today} />
+              <div>
+                <p className="font-black text-brown">今天还没有留下心情</p>
+                <p className="mt-1 text-sm text-muted">现在感觉怎么样？</p>
+                <div className="mt-4"><MoodSelector date={data.today} /></div>
+              </div>
             )}
             {life.partner && (
               <div className="mt-4 rounded-2xl bg-rose-50 p-3">
@@ -303,9 +313,7 @@ export default async function HomePage({
                         <p className="text-xs font-bold text-muted">
                           {life.partner.nickname} 今天的心情
                         </p>
-                        <p className="mt-0.5 font-bold text-brown">
-                          {partnerMeta?.label ?? "还没有留下心情"}
-                        </p>
+                        <p className="mt-0.5 font-bold text-brown">{partnerMeta?.label ?? `${life.partner.nickname || "TA"} 今天还没有留下心情`}</p>
                       </div>
                     </div>
                   );
@@ -537,7 +545,7 @@ export default async function HomePage({
             </div>
           </div>
 
-          <Card>
+          {(life.activities.length > 0 || data.transactions.length > 0) && <Card>
             <div className="flex items-center gap-2">
               <Sparkles className="size-5 text-nailong-deep" />
               <h2 className="font-black text-brown">最近动态</h2>
@@ -569,10 +577,7 @@ export default async function HomePage({
                 </div>
               ))}
             </div>
-            {data.transactions.length === 0 && life.activities.length === 0 && (
-              <p className="mt-3 text-sm text-muted">今天的小世界还很安静。</p>
-            )}
-          </Card>
+          </Card>}
         </div>
       </section>
     </main>

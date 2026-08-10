@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, Boxes, CalendarHeart, ClipboardCheck, Coins, Footprints, Gift, Heart, LayoutDashboard, Megaphone, Settings, SmilePlus, Trophy, Utensils } from "lucide-react";
+import { ArrowLeft, Boxes, CalendarHeart, ClipboardCheck, Coins, Database, Footprints, Gift, Heart, LayoutDashboard, Megaphone, Settings, SmilePlus, Trophy, Utensils } from "lucide-react";
 
 const items = [
   ["/admin", "概览", LayoutDashboard],
@@ -13,6 +13,7 @@ const items = [
   ["/admin/mysteries", "惊喜", Gift],
   ["/admin/achievements", "成就", Trophy],
   ["/admin/places", "足迹", Footprints],
+  ["/admin/storage", "存储", Database],
   ["/admin/announcements", "留言", Megaphone],
   ["/admin/settings", "设置", Settings],
 ] as const;

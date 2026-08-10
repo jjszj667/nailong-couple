@@ -8,6 +8,7 @@ import { dateInShanghai } from "@/lib/life";
 import { Card } from "@/components/ui/card";
 import { Flash } from "@/components/ui/flash";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default async function AdminCalendarPage({
   searchParams,
@@ -115,9 +116,7 @@ export default async function AdminCalendarPage({
               </Card>
             ))
           ) : (
-            <Card className="py-14 text-center text-sm text-muted">
-              还没有纪念日。
-            </Card>
+            <EmptyState icon={CalendarHeart} title="暂无纪念日" description="使用左侧表单创建第一条事件。" variant="technical" />
           )}
         </div>
       </div>

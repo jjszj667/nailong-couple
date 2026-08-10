@@ -3,8 +3,8 @@ import { Camera, CalendarDays, ImagePlus, Search } from "lucide-react";
 import { getMemoriesData } from "@/lib/data";
 import { dateInShanghai } from "@/lib/life";
 import { formatDate } from "@/lib/utils";
-import { Card } from "@/components/ui/card";
 import { MediaImage } from "@/components/ui/media-image";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export const metadata = { title: "我们的回忆" };
 
@@ -139,13 +139,7 @@ export default async function MemoriesPage({
           })}
         </div>
       ) : (
-        <Card className="py-16 text-center">
-          <Camera className="mx-auto size-10 text-nailong-deep" />
-          <h2 className="mt-4 font-bold text-brown">这一页还没有照片</h2>
-          <p className="mt-1 text-sm text-muted">
-            吃饭签到照片会自动出现，也可以给某一天添加生活照片。
-          </p>
-        </Card>
+        <EmptyState icon={Camera} title="这里还空空的" description="以后拍下的那些瞬间，会慢慢出现在这里。" size="lg" action={<Link href={`/calendar/${dateInShanghai()}#photos`} className="pill-button"><ImagePlus className="size-4" />留下第一张照片</Link>} />
       )}
     </main>
   );

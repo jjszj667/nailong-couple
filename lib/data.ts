@@ -337,6 +337,7 @@ export async function getMemoriesData(date?: string, category = "all") {
     .from("memory_photos")
     .select("*")
     .in("user_id", memberIds)
+    .is("deleted_at", null)
     .order("photo_date", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(240);

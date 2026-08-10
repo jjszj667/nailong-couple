@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireAdmin, requireUser } from "@/lib/auth";
 import { getCheckinWindow } from "@/lib/checkin-windows";
 import { dateInShanghai } from "@/lib/life";
+import { deleteConfirmedOrphans } from "@/lib/storage-admin";
 import type {
   CheckinType,
   MemoryPhotoCategory,
@@ -81,6 +82,11 @@ function extensionFor(file: File) {
       : "jpg";
 }
 
+function storageDatePath() {
+  const date = dateInShanghai();
+  return `${date.slice(0, 4)}/${date.slice(5, 7)}`;
+}
+
 export async function loginAction(formData: FormData) {
   const parsed = z
     .object({ email: z.email(), password: z.string().min(6) })
@@ -130,13 +136,13 @@ export async function submitCheckinAction(formData: FormData) {
     }
     validateImage(file);
     const supabase = await createClient();
-    const path = `${profile.id}/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.${extensionFor(file)}`;
+    const path = `${profile.id}/${storageDatePath()}/${crypto.randomUUID()}.${extensionFor(file)}`;
     const { error: uploadError } = await supabase.storage
       .from("checkin-images")
       .upload(path, file, {
         contentType: file.type,
         upsert: false,
-        cacheControl: "3600",
+        cacheControl: "31536000",
       });
     if (uploadError) throw uploadError;
     uploadedPath = path;
@@ -204,6 +210,8 @@ export async function updateProfileAction(formData: FormData) {
     redirect(target("/profile", "error", "昵称需要是 1～30 个字。"));
   const supabase = await createClient();
   let avatarPath = profile.avatar_url;
+  const previousAvatar = profile.avatar_url;
+  let uploadedAvatar: string | null = null;
   const file = formData.get("avatar");
   try {
     if (file instanceof File && file.size > 0) {
@@ -214,15 +222,23 @@ export async function updateProfileAction(formData: FormData) {
         .upload(avatarPath, file, {
           contentType: file.type,
           upsert: false,
+          cacheControl: "31536000",
         });
       if (uploadError) throw uploadError;
+      uploadedAvatar = avatarPath;
     }
     const { error } = await supabase
       .from("profiles")
       .update({ nickname: nickname.data, avatar_url: avatarPath })
       .eq("id", profile.id);
     if (error) throw error;
+    if (uploadedAvatar && previousAvatar && previousAvatar !== uploadedAvatar) {
+      await supabase.storage.from("avatars").remove([previousAvatar]);
+    }
   } catch (error) {
+    if (uploadedAvatar) {
+      await supabase.storage.from("avatars").remove([uploadedAvatar]);
+    }
     redirect(target("/profile", "error", errorText(error)));
   }
   revalidatePath("/", "layout");
@@ -250,16 +266,21 @@ export async function saveProductAction(formData: FormData) {
     );
   const supabase = await createClient();
   const id = parsed.data.id || null;
+  const productId = id ?? crypto.randomUUID();
   let imagePath = String(formData.get("existing_image") || "") || null;
+  const previousImage = imagePath;
+  let uploadedImage: string | null = null;
+  let databaseSaved = false;
   const file = formData.get("image");
   try {
     if (file instanceof File && file.size > 0) {
       validateImage(file);
-      imagePath = `products/${crypto.randomUUID()}.${extensionFor(file)}`;
+      imagePath = `products/${productId}/${storageDatePath()}/${crypto.randomUUID()}.${extensionFor(file)}`;
       const { error: uploadError } = await supabase.storage
         .from("product-images")
-        .upload(imagePath, file, { contentType: file.type, upsert: false });
+        .upload(imagePath, file, { contentType: file.type, upsert: false, cacheControl: "31536000" });
       if (uploadError) throw uploadError;
+      uploadedImage = imagePath;
     }
     const payload = {
       name: parsed.data.name,
@@ -281,9 +302,9 @@ export async function saveProductAction(formData: FormData) {
           .eq("id", id)
           .select("id")
           .single()
-      : await supabase.from("products").insert(payload).select("id").single();
+      : await supabase.from("products").insert({ id: productId, ...payload }).select("id").single();
     if (result.error) throw result.error;
-    const productId = id ?? String(result.data.id);
+    databaseSaved = true;
     if (parsed.data.product_type === "mystery") {
       const surpriseTitle = z
         .string()
@@ -315,7 +336,13 @@ export async function saveProductAction(formData: FormData) {
         .delete()
         .eq("product_id", productId);
     }
+    if (uploadedImage && previousImage && previousImage !== uploadedImage) {
+      await supabase.storage.from("product-images").remove([previousImage]);
+    }
   } catch (error) {
+    if (uploadedImage && !databaseSaved) {
+      await supabase.storage.from("product-images").remove([uploadedImage]);
+    }
     redirect(
       target(
         id ? `/admin/products/${id}` : "/admin/products/new",
@@ -710,10 +737,10 @@ export async function deleteCalendarEventAction(formData: FormData) {
 async function uploadLifeImage(file: File, userId: string, folder: string) {
   validateImage(file);
   const supabase = await createClient();
-  const path = `${userId}/${folder}/${crypto.randomUUID()}.${extensionFor(file)}`;
+  const path = `${userId}/${folder}/${storageDatePath()}/${crypto.randomUUID()}.${extensionFor(file)}`;
   const { error } = await supabase.storage
     .from("life-images")
-    .upload(path, file, { contentType: file.type, upsert: false });
+    .upload(path, file, { contentType: file.type, upsert: false, cacheControl: "31536000" });
   if (error) throw error;
   return path;
 }
@@ -762,7 +789,8 @@ export async function saveMemoryPhotosAction(formData: FormData) {
     .from("memory_photos")
     .select("id", { count: "exact", head: true })
     .eq("user_id", profile.id)
-    .eq("photo_date", parsed.data.photoDate);
+    .eq("photo_date", parsed.data.photoDate)
+    .is("deleted_at", null);
   if (countError) {
     redirect(target(returnTo, "error", errorText(countError)));
   }
@@ -817,20 +845,19 @@ export async function deleteMemoryPhotoAction(formData: FormData) {
   const supabase = await createClient();
   const { data: photo } = await supabase
     .from("memory_photos")
-    .select("image_url")
+    .select("id")
     .eq("id", parsed.data.id)
     .eq("user_id", profile.id)
     .maybeSingle();
   if (!photo) redirect(target(returnTo, "error", "你只能删除自己上传的照片。"));
   const { error } = await supabase
     .from("memory_photos")
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq("id", parsed.data.id)
     .eq("user_id", profile.id);
   if (error) redirect(target(returnTo, "error", errorText(error)));
-  await supabase.storage.from("life-images").remove([photo.image_url]);
   revalidatePath("/", "layout");
-  redirect(target(returnTo, "ok", "这张照片已经移出回忆。"));
+  redirect(target(returnTo, "ok", "这张照片已移到最近删除，可在 30 天内恢复。"));
 }
 
 export async function saveWishAction(formData: FormData) {
@@ -861,10 +888,14 @@ export async function saveWishAction(formData: FormData) {
     redirect(target("/wishes", "error", "请检查愿望名称和内容。"));
   const supabase = await createClient();
   let imageUrl = String(formData.get("existing_image") || "") || null;
+  const previousImage = imageUrl;
+  let uploadedImage: string | null = null;
   const file = formData.get("image");
   try {
-    if (file instanceof File && file.size > 0)
+    if (file instanceof File && file.size > 0) {
       imageUrl = await uploadLifeImage(file, profile.id, "wishes");
+      uploadedImage = imageUrl;
+    }
     const payload = {
       user_id: profile.id,
       title: parsed.data.title,
@@ -879,7 +910,13 @@ export async function saveWishAction(formData: FormData) {
       ? await supabase.from("wishes").update(payload).eq("id", parsed.data.id)
       : await supabase.from("wishes").insert(payload);
     if (result.error) throw result.error;
+    if (uploadedImage && previousImage && previousImage !== uploadedImage) {
+      await supabase.storage.from("life-images").remove([previousImage]);
+    }
   } catch (error) {
+    if (uploadedImage) {
+      await supabase.storage.from("life-images").remove([uploadedImage]);
+    }
     redirect(target("/wishes", "error", errorText(error)));
   }
   revalidatePath("/", "layout");
@@ -1067,10 +1104,14 @@ export async function savePlaceAction(formData: FormData) {
     redirect(target("/places", "error", "请检查地点名称、日期和经纬度。"));
   const supabase = await createClient();
   let imageUrl = String(formData.get("existing_image") || "") || null;
+  const previousImage = imageUrl;
+  let uploadedImage: string | null = null;
   const file = formData.get("image");
   try {
-    if (file instanceof File && file.size > 0)
+    if (file instanceof File && file.size > 0) {
       imageUrl = await uploadLifeImage(file, profile.id, "places");
+      uploadedImage = imageUrl;
+    }
     const payload = {
       title: parsed.data.title,
       place_name: parsed.data.placeName,
@@ -1086,7 +1127,13 @@ export async function savePlaceAction(formData: FormData) {
       ? await supabase.from("places").update(payload).eq("id", parsed.data.id)
       : await supabase.from("places").insert(payload);
     if (result.error) throw result.error;
+    if (uploadedImage && previousImage && previousImage !== uploadedImage) {
+      await supabase.storage.from("life-images").remove([previousImage]);
+    }
   } catch (error) {
+    if (uploadedImage) {
+      await supabase.storage.from("life-images").remove([uploadedImage]);
+    }
     redirect(target("/places", "error", errorText(error)));
   }
   revalidatePath("/places");
@@ -1098,8 +1145,98 @@ export async function deletePlaceAction(formData: FormData) {
   const id = z.uuid().safeParse(formData.get("place_id"));
   if (!id.success) redirect(target("/places", "error", "没有找到这个足迹。"));
   const supabase = await createClient();
-  const { error } = await supabase.from("places").delete().eq("id", id.data);
+  const { error } = await supabase
+    .from("places")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id.data);
   if (error) redirect(target("/places", "error", errorText(error)));
   revalidatePath("/places");
-  redirect(target("/places", "ok", "这条足迹已经删除。"));
+  redirect(target("/places", "ok", "这条足迹已移到最近删除，可在 30 天内恢复。"));
+}
+
+export async function updateStorageWarningAction(formData: FormData) {
+  await requireAdmin();
+  const warningMb = z.coerce.number().int().min(50).max(100000).safeParse(formData.get("warning_mb"));
+  if (!warningMb.success) redirect(target("/admin/storage", "error", "提醒阈值需要是 50～100000 MB。"));
+  const supabase = await createClient();
+  const { error } = await supabase.from("system_settings").update({ value: warningMb.data }).eq("key", "warning_storage_mb");
+  if (error) redirect(target("/admin/storage", "error", errorText(error)));
+  revalidatePath("/admin/storage");
+  redirect(target("/admin/storage", "ok", "存储提醒阈值已更新。"));
+}
+
+export async function cleanupOrphanStorageAction(formData: FormData) {
+  await requireAdmin();
+  if (formData.get("confirmation") !== "DELETE_ORPHANS") redirect(target("/admin/storage", "error", "请先确认清理操作。"));
+  let count: number;
+  try {
+    count = await deleteConfirmedOrphans();
+  } catch (error) {
+    redirect(target("/admin/storage", "error", errorText(error)));
+  }
+  revalidatePath("/admin/storage");
+  redirect(target("/admin/storage", "ok", `已清理 ${count} 个未被数据库引用的文件。`));
+}
+
+export async function cleanupExpiredTrashAction(formData: FormData) {
+  await requireAdmin();
+  if (formData.get("confirmation") !== "DELETE_EXPIRED_TRASH") redirect(target("/admin/storage", "error", "请先确认清理操作。"));
+  const supabase = await createClient();
+  const before = new Date(Date.now() - 30 * 86_400_000).toISOString();
+  const [photosRes, placesRes] = await Promise.all([
+    supabase.from("memory_photos").select("id,image_url").lt("deleted_at", before),
+    supabase.from("places").select("id,image_url").lt("deleted_at", before),
+  ]);
+  if (photosRes.error || placesRes.error) redirect(target("/admin/storage", "error", errorText(photosRes.error ?? placesRes.error)));
+  const photos = photosRes.data ?? [];
+  const places = placesRes.data ?? [];
+  const [photoDelete, placeDelete] = await Promise.all([
+    photos.length ? supabase.from("memory_photos").delete().in("id", photos.map((item) => item.id)) : Promise.resolve({ error: null }),
+    places.length ? supabase.from("places").delete().in("id", places.map((item) => item.id)) : Promise.resolve({ error: null }),
+  ]);
+  if (photoDelete.error || placeDelete.error) redirect(target("/admin/storage", "error", errorText(photoDelete.error ?? placeDelete.error)));
+  const paths = [...photos, ...places].map((item) => item.image_url).filter((value): value is string => Boolean(value));
+  if (paths.length) await supabase.storage.from("life-images").remove(paths);
+  revalidatePath("/", "layout");
+  redirect(target("/admin/storage", "ok", `已永久清理 ${photos.length + places.length} 条超过 30 天的回收站记录。`));
+}
+
+export async function restoreDeletedItemAction(formData: FormData) {
+  const { profile } = await requireUser();
+  const id = z.uuid().safeParse(formData.get("id"));
+  const type = formData.get("type");
+  if (!id.success || (type !== "memory" && type !== "place")) {
+    redirect(target("/profile/recently-deleted", "error", "没有找到这条记录。"));
+  }
+  const supabase = await createClient();
+  const query = type === "memory"
+    ? supabase.from("memory_photos").update({ deleted_at: null }).eq("id", id.data).eq("user_id", profile.id)
+    : supabase.from("places").update({ deleted_at: null }).eq("id", id.data).eq("created_by", profile.id);
+  const { error } = await query;
+  if (error) redirect(target("/profile/recently-deleted", "error", errorText(error)));
+  revalidatePath("/", "layout");
+  redirect(target("/profile/recently-deleted", "ok", "已经恢复到原来的位置。"));
+}
+
+export async function permanentlyDeleteItemAction(formData: FormData) {
+  const { profile } = await requireUser();
+  const id = z.uuid().safeParse(formData.get("id"));
+  const type = formData.get("type");
+  if (!id.success || (type !== "memory" && type !== "place")) {
+    redirect(target("/profile/recently-deleted", "error", "没有找到这条记录。"));
+  }
+  const supabase = await createClient();
+  const lookup = type === "memory"
+    ? supabase.from("memory_photos").select("image_url").eq("id", id.data).eq("user_id", profile.id).not("deleted_at", "is", null).maybeSingle()
+    : supabase.from("places").select("image_url").eq("id", id.data).eq("created_by", profile.id).not("deleted_at", "is", null).maybeSingle();
+  const { data: item, error: lookupError } = await lookup;
+  if (lookupError || !item) redirect(target("/profile/recently-deleted", "error", "没有找到可永久删除的记录。"));
+  const deletion = type === "memory"
+    ? supabase.from("memory_photos").delete().eq("id", id.data).eq("user_id", profile.id)
+    : supabase.from("places").delete().eq("id", id.data).eq("created_by", profile.id);
+  const { error } = await deletion;
+  if (error) redirect(target("/profile/recently-deleted", "error", errorText(error)));
+  if (item.image_url) await supabase.storage.from("life-images").remove([item.image_url]);
+  revalidatePath("/", "layout");
+  redirect(target("/profile/recently-deleted", "ok", "记录和对应照片已永久删除。"));
 }

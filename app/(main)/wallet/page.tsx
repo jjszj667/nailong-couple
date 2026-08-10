@@ -8,6 +8,7 @@ import { getWalletData } from "@/lib/data";
 import { formatDate } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Coin } from "@/components/ui/coin";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export const metadata = { title: "奶龙币钱包" };
 
@@ -103,9 +104,7 @@ export default async function WalletPage() {
             })}
           </Card>
         ) : (
-          <Card className="py-14 text-center text-sm text-muted">
-            第一枚奶龙币正在等你通过签到获得。
-          </Card>
+          <EmptyState icon={WalletCards} title="奶龙币还没有动静" description="以后获得和使用的记录都会留在这里。" />
         )}
       </section>
     </main>

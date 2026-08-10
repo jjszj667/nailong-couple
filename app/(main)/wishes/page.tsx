@@ -6,13 +6,14 @@ import { Flash } from "@/components/ui/flash";
 import { MediaImage } from "@/components/ui/media-image";
 import { SubmitButton } from "@/components/ui/submit-button";
 import type { Wish } from "@/types/database";
+import { ImagePicker } from "@/components/image-picker";
 
 export const metadata = { title: "愿望清单" };
 
 const categoryLabels: Record<string, string> = { food: "想吃", travel: "想去", gift: "想要", activity: "想一起做", movie: "想看", other: "小愿望" };
 
 function WishForm({ wish }: { wish?: Wish & { signed_url?: string | null } }) {
-  return <form action={saveWishAction} className="space-y-3"><input type="hidden" name="id" value={wish?.id ?? ""} /><input type="hidden" name="existing_image" value={wish?.image_url ?? ""} /><input name="title" className="field" required maxLength={100} defaultValue={wish?.title} placeholder="例如：想吃海底捞" /><textarea name="description" className="field min-h-20" maxLength={800} defaultValue={wish?.description} placeholder="再说一点点（可选）" /><div className="grid grid-cols-2 gap-3"><select name="category" className="field" defaultValue={wish?.category ?? "food"}><option value="food">想吃什么</option><option value="travel">想去哪</option><option value="gift">想买什么</option><option value="activity">想一起做什么</option><option value="movie">想看的电影</option><option value="other">其他</option></select><select name="status" className="field" defaultValue={wish?.status ?? "active"}><option value="active">想要实现</option><option value="completed">愿望实现啦</option><option value="archived">先收起来</option></select></div><label className="block text-xs font-semibold text-muted">配一张照片（可选）<input name="image" type="file" accept="image/jpeg,image/png,image/webp" className="field mt-2 text-sm" /></label><SubmitButton pendingText="正在保存…">{wish ? "保存修改" : "收进愿望清单"}</SubmitButton></form>;
+  return <form action={saveWishAction} className="space-y-3"><input type="hidden" name="id" value={wish?.id ?? ""} /><input type="hidden" name="existing_image" value={wish?.image_url ?? ""} /><input name="title" className="field" required maxLength={100} defaultValue={wish?.title} placeholder="例如：想吃海底捞" /><textarea name="description" className="field min-h-20" maxLength={800} defaultValue={wish?.description} placeholder="再说一点点（可选）" /><div className="grid grid-cols-2 gap-3"><select name="category" className="field" defaultValue={wish?.category ?? "food"}><option value="food">想吃什么</option><option value="travel">想去哪</option><option value="gift">想买什么</option><option value="activity">想一起做什么</option><option value="movie">想看的电影</option><option value="other">其他</option></select><select name="status" className="field" defaultValue={wish?.status ?? "active"}><option value="active">想要实现</option><option value="completed">愿望实现啦</option><option value="archived">先收起来</option></select></div><div><span className="mb-2 block text-xs font-semibold text-muted">配一张照片（可选）</span><ImagePicker purpose="memory" label="选择愿望照片" /></div><SubmitButton pendingText="正在保存…">{wish ? "保存修改" : "收进愿望清单"}</SubmitButton></form>;
 }
 
 export default async function WishesPage({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string }> }) {

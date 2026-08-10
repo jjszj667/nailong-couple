@@ -7,6 +7,7 @@ import { Coin } from "@/components/ui/coin";
 import { Flash } from "@/components/ui/flash";
 import { MoodIcon } from "@/components/mood-icon";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const quick = ["抱抱你", "今晚陪你聊聊", "辛苦啦", "想吃什么告诉我", "我在呢"];
 
@@ -126,9 +127,7 @@ export default async function AdminMoodsPage({
             );
           })
         ) : (
-          <Card className="py-14 text-center text-sm text-muted">
-            还没有心情记录。
-          </Card>
+          <EmptyState icon={MessageCircleHeart} title="暂无心情记录" description="用户留下心情后，会按日期显示在这里。" variant="technical" />
         )}
       </div>
     </div>

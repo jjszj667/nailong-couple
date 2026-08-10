@@ -49,7 +49,7 @@ export default async function CheckinPage({ searchParams }: { searchParams: Prom
               <form action={submitCheckinAction}>
                 <input type="hidden" name="type" value={type} />
                 <input type="hidden" name="request_id" value={crypto.randomUUID()} />
-                <ImagePicker required label={`上传${window.shortLabel.slice(0, 2)}照片`} />
+                <ImagePicker required purpose="checkin" label={`上传${window.shortLabel.slice(0, 2)}照片`} />
                 <p className="mt-3 text-sm leading-6 text-muted">{hint}</p>
                 <SubmitButton className="mt-4 w-full" pendingText="正在保存照片和发币…">完成{window.shortLabel}</SubmitButton>
               </form>

@@ -194,7 +194,7 @@ export default async function AdminPage() {
                     </Link>
                   ))
                 ) : (
-                  <p className="text-sm text-muted">暂时没有需要处理的兑换。</p>
+                  <p className="text-sm font-bold text-green-700">现在没有需要处理的兑换 · 都处理好啦 ✓</p>
                 )}
               </div>
             </Card>

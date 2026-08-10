@@ -31,6 +31,7 @@ import { MoodSelector } from "@/components/mood-selector";
 import { MultiImagePicker } from "@/components/multi-image-picker";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const categoryLabels: Record<string, string> = {
   daily: "生活",
@@ -71,6 +72,7 @@ export default async function DayDetailPage({
       .filter((item) => item.direction === "expense")
       .reduce((sum, item) => sum + item.amount, 0),
   );
+  const hasDayContent = [data.moods, data.notes, data.checkins, data.events, data.photos, data.transactions, data.orders, data.wishes, data.places].some((items) => items.length > 0);
 
   return (
     <main className="page-shell max-w-5xl py-6 sm:py-10">
@@ -104,6 +106,10 @@ export default async function DayDetailPage({
           </div>
         )}
       </header>
+
+      {!hasDayContent && (
+        <EmptyState className="mb-6" icon={CalendarHeart} title="这一天还没有留下记录。" description="以后想起来，也可以回来补上一点。" variant="quiet" />
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[1.08fr_.92fr]">
         <div className="space-y-6">

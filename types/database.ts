@@ -205,6 +205,7 @@ export type MemoryPhoto = {
   category: MemoryPhotoCategory;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
 };
 
 export type MemoryCandidate = {
@@ -291,4 +292,5 @@ export type Place = {
   created_by: string;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
 };

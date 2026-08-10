@@ -6,7 +6,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 export function ProductForm({ product, mystery }: { product?: Product; mystery?: ProductMysteryDetails | null }) {
   return (
     <form action={saveProductAction} className="grid gap-6 lg:grid-cols-[.8fr_1.2fr]">
-      <div><ImagePicker label={product ? "选择新商品图片（可选）" : "选择商品图片（可选）"} /><input type="hidden" name="existing_image" value={product?.image_url ?? ""} /></div>
+      <div><ImagePicker purpose="product" label={product ? "选择新商品图片（可选）" : "选择商品图片（可选）"} /><input type="hidden" name="existing_image" value={product?.image_url ?? ""} /></div>
       <div className="space-y-4">
         <input type="hidden" name="id" value={product?.id ?? ""} />
         <label className="block text-sm font-semibold text-brown">商品名称<input name="name" className="field mt-2" defaultValue={product?.name} maxLength={60} required /></label>

@@ -311,9 +311,18 @@ export async function getHomePageData() {
     (item) => item.memory_date.slice(5) === today.slice(5),
   );
   const candidatePool = onThisDay.length ? onThisDay : allCandidates;
-  const selectedMemory = candidatePool.length
+  let selectedMemory = candidatePool.length
     ? candidatePool[stableIndex(`${profile.id}:${today}`, candidatePool.length)]
     : null;
+  if (selectedMemory?.kind === "photo") {
+    const { data: activePhoto } = await supabase
+      .from("memory_photos")
+      .select("id")
+      .eq("id", selectedMemory.id)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (!activePhoto) selectedMemory = null;
+  }
   const [randomMemory] = selectedMemory
     ? await signedLifeImages([selectedMemory])
     : [null];
@@ -608,6 +617,7 @@ export async function getDayDetail(dateInput: string) {
       .from("memory_photos")
       .select("*")
       .in("user_id", memberIds)
+      .is("deleted_at", null)
       .eq("photo_date", date)
       .order("created_at"),
     supabase
@@ -635,6 +645,7 @@ export async function getDayDetail(dateInput: string) {
       .from("places")
       .select("*")
       .in("created_by", memberIds)
+      .is("deleted_at", null)
       .eq("visit_date", date),
   ]);
   const checkins = await signedCheckins((checkinsRes.data ?? []) as Checkin[]);
@@ -681,7 +692,7 @@ export async function getStoryData() {
         .select("*")
         .eq("is_story_event", true)
         .order("event_date"),
-      supabase.from("memory_photos").select("*").order("photo_date").limit(300),
+      supabase.from("memory_photos").select("*").is("deleted_at", null).order("photo_date").limit(300),
     ]);
   const relationship = relationshipRes.data as RelationshipSettings | null;
   const profiles = (profilesRes.data ?? []) as Profile[];
@@ -854,8 +865,48 @@ export async function getPlacesData() {
   const { data } = await supabase
     .from("places")
     .select("*")
+    .is("deleted_at", null)
     .order("visit_date", { ascending: false });
   return signedLifeImages((data ?? []) as Place[]);
+}
+
+export async function getRecentlyDeletedData() {
+  const { profile } = await requireUser();
+  const supabase = await createClient();
+  const [photosRes, placesRes] = await Promise.all([
+    supabase
+      .from("memory_photos")
+      .select("*")
+      .eq("user_id", profile.id)
+      .not("deleted_at", "is", null)
+      .order("deleted_at", { ascending: false }),
+    supabase
+      .from("places")
+      .select("*")
+      .eq("created_by", profile.id)
+      .not("deleted_at", "is", null)
+      .order("deleted_at", { ascending: false }),
+  ]);
+  const photos = await signedLifeImages((photosRes.data ?? []) as MemoryPhoto[]);
+  const places = await signedLifeImages((placesRes.data ?? []) as Place[]);
+  return [
+    ...photos.map((item) => ({
+      id: item.id,
+      type: "memory" as const,
+      title: item.caption || "生活照片",
+      originalDate: item.photo_date,
+      deletedAt: item.deleted_at!,
+      signedUrl: item.signed_url,
+    })),
+    ...places.map((item) => ({
+      id: item.id,
+      type: "place" as const,
+      title: `${item.title} · ${item.place_name}`,
+      originalDate: item.visit_date,
+      deletedAt: item.deleted_at!,
+      signedUrl: item.signed_url,
+    })),
+  ].sort((a, b) => b.deletedAt.localeCompare(a.deletedAt));
 }
 
 export async function getAdminMysteryData() {

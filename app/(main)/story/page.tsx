@@ -5,6 +5,7 @@ import { getStoryData } from "@/lib/life-data";
 import { formatDate } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { MediaImage } from "@/components/ui/media-image";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export const metadata = { title: "我们的故事" };
 
@@ -92,16 +93,7 @@ export default async function StoryPage() {
           </div>
         </section>
       ) : (
-        <Card className="mt-8 py-16 text-center">
-          <CalendarHeart className="mx-auto size-10 text-nailong-deep" />
-          <h2 className="mt-4 font-black text-brown">时间线还在等第一章</h2>
-          <p className="mt-2 text-sm text-muted">
-            在日历事件中勾选“加入我们的故事”，重要日子就会出现在这里。
-          </p>
-          <Link href="/calendar" className="pill-button mt-5 inline-flex">
-            去日历收藏故事
-          </Link>
-        </Card>
+        <EmptyState className="mt-8" icon={CalendarHeart} title="故事才刚刚开始" description="把重要的日子加入这里，慢慢写成你们的故事。" size="lg" action={<Link href="/calendar" className="pill-button">记录第一个故事</Link>} />
       )}
     </main>
   );

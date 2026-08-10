@@ -14,6 +14,7 @@ import {
   ReceiptText,
   ShieldCheck,
   Sparkles,
+  Trash2,
   UserRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -26,6 +27,7 @@ import { Coin } from "@/components/ui/coin";
 import { Flash } from "@/components/ui/flash";
 import { MediaImage } from "@/components/ui/media-image";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { ImagePicker } from "@/components/image-picker";
 
 export const metadata = { title: "我的" };
 
@@ -105,6 +107,12 @@ const groups: {
         label: "情侣成就",
         hint: "一起解锁的徽章",
         icon: Award,
+      },
+      {
+        href: "/profile/recently-deleted",
+        label: "最近删除",
+        hint: "恢复或永久删除照片与足迹",
+        icon: Trash2,
       },
     ],
   },
@@ -250,15 +258,10 @@ export default async function ProfilePage({
                   required
                 />
               </label>
-              <label className="block text-sm font-semibold text-brown">
-                新头像（可选）
-                <input
-                  name="avatar"
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="field mt-2 text-sm"
-                />
-              </label>
+              <div className="text-sm font-semibold text-brown">
+                <span className="mb-2 block">新头像（可选）</span>
+                <ImagePicker name="avatar" purpose="avatar" label="选择新头像" />
+              </div>
               <SubmitButton pendingText="正在保存…">保存资料</SubmitButton>
             </form>
             <form
