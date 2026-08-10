@@ -6,6 +6,7 @@ import { getUserOverview } from "@/lib/data";
 import {
   addDays,
   dateInShanghai,
+  daysBetween,
   eventOccurrenceInYear,
   monthBounds,
   recentDates,
@@ -19,6 +20,8 @@ import type {
   CalendarEvent,
   Checkin,
   DailyNote,
+  MemoryCandidate,
+  MemoryPhoto,
   Mood,
   MoodResponse,
   Order,
@@ -51,6 +54,23 @@ type HomeDashboardPayload = {
   wishes: Wish[];
   profiles: Profile[];
 };
+
+type CoupleHomeExtrasPayload = {
+  couple_moods?: Mood[];
+  couple_notes?: DailyNote[];
+  couple_checkins?: Checkin[];
+  goal_products?: Product[];
+  memory_candidates?: MemoryCandidate[];
+};
+
+function stableIndex(seed: string, length: number) {
+  let hash = 2166136261;
+  for (const character of seed) {
+    hash ^= character.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return Math.abs(hash) % length;
+}
 
 async function signedLifeImages<T extends { image_url: string | null }>(
   items: T[],
@@ -218,16 +238,41 @@ export async function getHomeLifeData() {
 export async function getHomePageData() {
   const { profile } = await requireUser();
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("get_home_dashboard");
+  const [{ data, error }, extrasResult] = await Promise.all([
+    supabase.rpc("get_home_dashboard"),
+    supabase.rpc("get_couple_home_extras"),
+  ]);
   if (error || !data) {
     const [overview, life] = await Promise.all([
       getUserOverview(),
       getHomeLifeData(),
     ]);
-    return { overview, life };
+    const anniversaryMode =
+      life.nearEvents.find((item) => item.daysAway === 0) ?? null;
+    return {
+      overview: {
+        ...overview,
+        goalProduct: null,
+        goalProgress: 0,
+        goalRemaining: 0,
+      },
+      life: {
+        ...life,
+        anniversaryMode,
+        otherTodayEvents: life.nearEvents.filter(
+          (item) =>
+            item.daysAway === 0 && item.event.id !== anniversaryMode?.event.id,
+        ),
+        coupleMoods: life.mood ? [life.mood] : [],
+        coupleNotes: life.note ? [life.note] : [],
+        coupleCheckins: [],
+        randomMemory: null,
+      },
+    };
   }
 
   const payload = data as HomeDashboardPayload;
+  const extras = (extrasResult.data ?? {}) as CoupleHomeExtrasPayload;
   const today = dateInShanghai();
   const moods = payload.moods ?? [];
   const mood = moods.find((item) => item.mood_date === today) ?? null;
@@ -247,6 +292,47 @@ export async function getHomePageData() {
   const todayIncome = (payload.today_transactions ?? [])
     .filter((item) => item.direction === "income")
     .reduce((sum, item) => sum + item.amount, 0);
+  const coupleMoods =
+    extras.couple_moods ?? moods.filter((item) => item.mood_date === today);
+  const coupleNotes =
+    extras.couple_notes ?? (payload.daily_note ? [payload.daily_note] : []);
+  const coupleCheckins = extras.couple_checkins ?? payload.checkins ?? [];
+  const availableBalance = payload.wallet?.available_balance ?? 0;
+  const goalProducts = [
+    ...(extras.goal_products ?? payload.products ?? []),
+  ].sort((a, b) => a.price - b.price);
+  const goalProduct =
+    goalProducts.find((item) => item.price >= availableBalance) ??
+    goalProducts.find((item) => item.is_featured) ??
+    goalProducts.at(-1) ??
+    null;
+  const allCandidates = extras.memory_candidates ?? [];
+  const onThisDay = allCandidates.filter(
+    (item) => item.memory_date.slice(5) === today.slice(5),
+  );
+  const candidatePool = onThisDay.length ? onThisDay : allCandidates;
+  const selectedMemory = candidatePool.length
+    ? candidatePool[stableIndex(`${profile.id}:${today}`, candidatePool.length)]
+    : null;
+  const [randomMemory] = selectedMemory
+    ? await signedLifeImages([selectedMemory])
+    : [null];
+  const eventPriority = (item: (typeof allUpcomingEvents)[number]) => {
+    const title = item.event.title.toLowerCase();
+    if (item.event.event_type === "anniversary" && /(在一起|恋爱)/.test(title))
+      return 0;
+    if (/(第一次见面|初见)/.test(title)) return 1;
+    if (item.event.event_type === "birthday") return 2;
+    return 3;
+  };
+  const todayEvents = allUpcomingEvents
+    .filter(
+      (item) =>
+        item.daysAway === 0 &&
+        (item.event.repeat_type === "yearly" ||
+          item.event.event_type === "anniversary"),
+    )
+    .sort((a, b) => eventPriority(a) - eventPriority(b));
 
   return {
     overview: {
@@ -258,6 +344,16 @@ export async function getHomePageData() {
         (item) => item.type === "dinner",
       ),
       todayIncome,
+      goalProduct,
+      goalProgress: goalProduct
+        ? Math.min(
+            100,
+            Math.floor((availableBalance / goalProduct.price) * 100),
+          )
+        : 0,
+      goalRemaining: goalProduct
+        ? Math.max(0, goalProduct.price - availableBalance)
+        : 0,
       products: payload.products ?? [],
       announcement: payload.announcement,
       transactions: payload.transactions ?? [],
@@ -283,6 +379,20 @@ export async function getHomePageData() {
       nearEvents: allUpcomingEvents.filter((item) =>
         Boolean(item.reminderLevel),
       ),
+      anniversaryMode: todayEvents[0] ?? null,
+      otherTodayEvents: todayEvents.slice(1),
+      coupleMoods,
+      coupleNotes,
+      coupleCheckins,
+      randomMemory: randomMemory
+        ? {
+            ...randomMemory,
+            daysAgo: daysBetween(randomMemory.memory_date, today),
+            isOnThisDay: onThisDay.length > 0,
+            owner:
+              profiles.find((item) => item.id === randomMemory.user_id) ?? null,
+          }
+        : null,
       wishes: payload.wishes ?? [],
       activities: [
         ...moods.map((item) => ({
@@ -313,6 +423,20 @@ export async function getCalendarData(
   const bounds = monthBounds(monthInput ?? dateInShanghai().slice(0, 7));
   const today = dateInShanghai();
   const trendStart = addDays(today, -6);
+  const [relationshipRes, profilesRes] = await Promise.all([
+    supabase
+      .from("relationship_settings")
+      .select("*")
+      .eq("id", true)
+      .maybeSingle(),
+    supabase.from("profiles").select("*").order("created_at"),
+  ]);
+  const relationship = relationshipRes.data as RelationshipSettings | null;
+  const profiles = (profilesRes.data ?? []) as Profile[];
+  const partner = resolvePartnerProfile(profile, profiles, relationship);
+  const memberIds = [profile.id, partner?.id].filter((value): value is string =>
+    Boolean(value),
+  );
   const date =
     selectedDate && /^\d{4}-\d{2}-\d{2}$/.test(selectedDate)
       ? selectedDate
@@ -322,21 +446,21 @@ export async function getCalendarData(
       supabase
         .from("moods")
         .select("*")
-        .eq("user_id", profile.id)
+        .in("user_id", memberIds)
         .gte("mood_date", bounds.start)
         .lte("mood_date", bounds.end)
         .order("mood_date"),
       supabase
         .from("daily_notes")
         .select("*")
-        .eq("user_id", profile.id)
+        .in("user_id", memberIds)
         .gte("note_date", bounds.start)
         .lte("note_date", bounds.end)
         .order("note_date"),
       supabase
         .from("checkins")
         .select("*")
-        .eq("user_id", profile.id)
+        .in("user_id", memberIds)
         .gte("checkin_date", bounds.start)
         .lte("checkin_date", bounds.end)
         .order("checkin_date"),
@@ -408,6 +532,9 @@ export async function getCalendarData(
     notes,
     checkins,
     events,
+    members: memberIds
+      .map((id) => profiles.find((item) => item.id === id))
+      .filter((item): item is Profile => Boolean(item)),
     recentMoods: (recentMoodsRes.data ?? []) as Mood[],
     trendDates: recentDates(7, today),
     upcomingEvents,
@@ -421,6 +548,154 @@ export async function getCalendarData(
           orders: dayOrders,
         }
       : null,
+  };
+}
+
+export async function getDayDetail(dateInput: string) {
+  const { profile } = await requireUser();
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(dateInput)
+    ? dateInput
+    : dateInShanghai();
+  const supabase = await createClient();
+  const [relationshipRes, profilesRes] = await Promise.all([
+    supabase
+      .from("relationship_settings")
+      .select("*")
+      .eq("id", true)
+      .maybeSingle(),
+    supabase.from("profiles").select("*").order("created_at"),
+  ]);
+  const relationship = relationshipRes.data as RelationshipSettings | null;
+  const profiles = (profilesRes.data ?? []) as Profile[];
+  const partner = resolvePartnerProfile(profile, profiles, relationship);
+  const memberIds = [profile.id, partner?.id].filter((value): value is string =>
+    Boolean(value),
+  );
+  const start = new Date(`${date}T00:00:00+08:00`).toISOString();
+  const end = new Date(
+    new Date(`${date}T00:00:00+08:00`).getTime() + 86_400_000,
+  ).toISOString();
+  const [
+    moodsRes,
+    notesRes,
+    checkinsRes,
+    eventsRes,
+    photosRes,
+    transactionsRes,
+    ordersRes,
+    wishesRes,
+    placesRes,
+  ] = await Promise.all([
+    supabase
+      .from("moods")
+      .select("*")
+      .in("user_id", memberIds)
+      .eq("mood_date", date),
+    supabase
+      .from("daily_notes")
+      .select("*")
+      .in("user_id", memberIds)
+      .eq("note_date", date),
+    supabase
+      .from("checkins")
+      .select("*")
+      .in("user_id", memberIds)
+      .eq("checkin_date", date)
+      .order("created_at"),
+    supabase.from("calendar_events").select("*").order("event_date").limit(500),
+    supabase
+      .from("memory_photos")
+      .select("*")
+      .in("user_id", memberIds)
+      .eq("photo_date", date)
+      .order("created_at"),
+    supabase
+      .from("wallet_transactions")
+      .select("*")
+      .in("user_id", memberIds)
+      .gte("created_at", start)
+      .lt("created_at", end)
+      .order("created_at"),
+    supabase
+      .from("orders")
+      .select("*")
+      .in("user_id", memberIds)
+      .gte("created_at", start)
+      .lt("created_at", end)
+      .order("created_at"),
+    supabase
+      .from("wishes")
+      .select("*")
+      .in("user_id", memberIds)
+      .eq("status", "completed")
+      .gte("completed_at", start)
+      .lt("completed_at", end),
+    supabase
+      .from("places")
+      .select("*")
+      .in("created_by", memberIds)
+      .eq("visit_date", date),
+  ]);
+  const checkins = await signedCheckins((checkinsRes.data ?? []) as Checkin[]);
+  const photos = await signedLifeImages(
+    (photosRes.data ?? []) as MemoryPhoto[],
+  );
+  const events = ((eventsRes.data ?? []) as CalendarEvent[]).filter((event) =>
+    event.repeat_type === "yearly"
+      ? eventOccurrenceInYear(event, Number(date.slice(0, 4))) === date
+      : event.event_date === date,
+  );
+  return {
+    date,
+    profile,
+    partner,
+    members: memberIds
+      .map((id) => profiles.find((item) => item.id === id))
+      .filter((item): item is Profile => Boolean(item)),
+    moods: (moodsRes.data ?? []) as Mood[],
+    notes: (notesRes.data ?? []) as DailyNote[],
+    checkins,
+    events,
+    photos,
+    transactions: (transactionsRes.data ?? []) as WalletTransaction[],
+    orders: (ordersRes.data ?? []) as Order[],
+    wishes: (wishesRes.data ?? []) as Wish[],
+    places: (placesRes.data ?? []) as Place[],
+  };
+}
+
+export async function getStoryData() {
+  const { profile } = await requireUser();
+  const supabase = await createClient();
+  const [relationshipRes, profilesRes, eventsRes, photosRes] =
+    await Promise.all([
+      supabase
+        .from("relationship_settings")
+        .select("*")
+        .eq("id", true)
+        .maybeSingle(),
+      supabase.from("profiles").select("*").order("created_at"),
+      supabase
+        .from("calendar_events")
+        .select("*")
+        .eq("is_story_event", true)
+        .order("event_date"),
+      supabase.from("memory_photos").select("*").order("photo_date").limit(300),
+    ]);
+  const relationship = relationshipRes.data as RelationshipSettings | null;
+  const profiles = (profilesRes.data ?? []) as Profile[];
+  const partner = resolvePartnerProfile(profile, profiles, relationship);
+  const memberIds = new Set([profile.id, partner?.id].filter(Boolean));
+  const photos = await signedLifeImages(
+    ((photosRes.data ?? []) as MemoryPhoto[]).filter((photo) =>
+      memberIds.has(photo.user_id),
+    ),
+  );
+  return {
+    relationship,
+    relationshipDays: relationshipDays(relationship?.start_date ?? null),
+    events: (eventsRes.data ?? []) as CalendarEvent[],
+    photos,
   };
 }
 

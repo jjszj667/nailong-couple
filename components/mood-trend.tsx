@@ -50,7 +50,7 @@ export function MoodTrend({
           return (
             <Link
               key={day.date}
-              href={`/calendar?month=${day.date.slice(0, 7)}&date=${day.date}`}
+              href={`/calendar/${day.date}`}
               aria-label={`${day.date}${meta ? `，${meta.label}` : "，没有记录"}`}
               className={cn(
                 "flex min-w-0 flex-col items-center rounded-2xl px-0.5 py-2 transition hover:bg-white",

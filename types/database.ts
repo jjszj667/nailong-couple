@@ -24,6 +24,16 @@ export type WishCategory =
   "food" | "travel" | "gift" | "activity" | "movie" | "other";
 export type WishStatus = "active" | "completed" | "archived";
 export type MysteryOrderStatus = "preparing" | "ready" | "revealed";
+export type MemoryPhotoCategory =
+  | "daily"
+  | "date"
+  | "travel"
+  | "food"
+  | "gift"
+  | "selfie"
+  | "scenery"
+  | "special"
+  | "other";
 
 export type Profile = {
   id: string;
@@ -180,9 +190,31 @@ export type CalendarEvent = {
   event_type: string;
   note: string;
   repeat_type: EventRepeatType;
+  is_story_event: boolean;
   created_by: string;
   created_at: string;
   updated_at: string;
+};
+
+export type MemoryPhoto = {
+  id: string;
+  user_id: string;
+  photo_date: string;
+  image_url: string;
+  caption: string;
+  category: MemoryPhotoCategory;
+  created_at: string;
+  updated_at: string;
+};
+
+export type MemoryCandidate = {
+  id: string;
+  memory_date: string;
+  kind: "photo" | "note" | "mood" | "event" | "place";
+  title: string;
+  body: string;
+  image_url: string | null;
+  user_id: string;
 };
 
 export type Wish = {

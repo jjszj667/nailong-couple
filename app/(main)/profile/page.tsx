@@ -49,9 +49,15 @@ const groups: {
     items: [
       {
         href: "/memories",
-        label: "吃饭照片",
-        hint: "认真吃饭的回忆",
+        label: "我们的回忆",
+        hint: "吃饭和生活照片",
         icon: ImageIcon,
+      },
+      {
+        href: "/story",
+        label: "我们的故事",
+        hint: "重要日子的时间线",
+        icon: Heart,
       },
       {
         href: "/calendar",

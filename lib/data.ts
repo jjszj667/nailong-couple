@@ -7,6 +7,10 @@ import { getPublicImageUrl, SHANGHAI_TIME_ZONE } from "@/lib/utils";
 import type {
   Announcement,
   Checkin,
+  DailyNote,
+  MemoryPhoto,
+  Mood,
+  MoodResponse,
   Order,
   OrderEvent,
   Product,
@@ -16,6 +20,8 @@ import type {
   SystemSetting,
   WalletBalance,
   WalletTransaction,
+  Wish,
+  WishAdminMeta,
 } from "@/types/database";
 
 export function shanghaiToday() {
@@ -53,6 +59,19 @@ async function signCheckinImages(checkins: Checkin[]) {
       3600,
     );
   return checkins.map((item, index) => ({
+    ...item,
+    signed_url: data?.[index]?.signedUrl ?? null,
+  }));
+}
+
+async function signMemoryImages(photos: MemoryPhoto[]) {
+  if (!photos.length) return [];
+  const supabase = await createClient();
+  const { data } = await supabase.storage.from("life-images").createSignedUrls(
+    photos.map((item) => item.image_url),
+    3600,
+  );
+  return photos.map((item, index) => ({
     ...item,
     signed_url: data?.[index]?.signedUrl ?? null,
   }));
@@ -290,20 +309,91 @@ export async function getWalletData() {
   };
 }
 
-export async function getMemoriesData(date?: string) {
+export async function getMemoriesData(date?: string, category = "all") {
   const { profile } = await requireUser();
   const supabase = await createClient();
-  let query = supabase
+  const [relationshipRes, profilesRes] = await Promise.all([
+    supabase
+      .from("relationship_settings")
+      .select("*")
+      .eq("id", true)
+      .maybeSingle(),
+    supabase.from("profiles").select("*").order("created_at"),
+  ]);
+  const profiles = (profilesRes.data ?? []) as Profile[];
+  const relationship = relationshipRes.data as RelationshipSettings | null;
+  const partner = resolvePartnerProfile(profile, profiles, relationship);
+  const memberIds = [profile.id, partner?.id].filter((value): value is string =>
+    Boolean(value),
+  );
+  let checkinsQuery = supabase
     .from("checkins")
     .select("*")
-    .eq("user_id", profile.id)
+    .in("user_id", memberIds)
     .order("checkin_date", { ascending: false })
     .order("created_at", { ascending: false })
-    .limit(120);
-  if (date && /^\d{4}-\d{2}-\d{2}$/.test(date))
-    query = query.eq("checkin_date", date);
-  const { data } = await query;
-  return signCheckinImages((data ?? []) as Checkin[]);
+    .limit(240);
+  let photosQuery = supabase
+    .from("memory_photos")
+    .select("*")
+    .in("user_id", memberIds)
+    .order("photo_date", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(240);
+  if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    checkinsQuery = checkinsQuery.eq("checkin_date", date);
+    photosQuery = photosQuery.eq("photo_date", date);
+  }
+  const [checkinsRes, photosRes] = await Promise.all([
+    checkinsQuery,
+    photosQuery,
+  ]);
+  const checkins =
+    category === "all" || category === "food"
+      ? await signCheckinImages((checkinsRes.data ?? []) as Checkin[])
+      : [];
+  const rawPhotos = (photosRes.data ?? []) as MemoryPhoto[];
+  const filteredPhotos =
+    category === "all" || category === "life"
+      ? rawPhotos
+      : rawPhotos.filter((item) =>
+          category === "other"
+            ? !["travel", "date", "gift", "food"].includes(item.category)
+            : item.category === category,
+        );
+  const photos = await signMemoryImages(filteredPhotos);
+  const profileMap = new Map(profiles.map((item) => [item.id, item]));
+  return {
+    profile,
+    partner,
+    items: [
+      ...checkins.map((item) => ({
+        id: `checkin-${item.id}`,
+        sourceId: item.id,
+        date: item.checkin_date,
+        createdAt: item.created_at,
+        source: "checkin" as const,
+        category: "food",
+        caption: item.type === "lunch" ? "认真吃了午饭" : "认真吃了晚饭",
+        signedUrl: item.signed_url,
+        owner: profileMap.get(item.user_id) ?? null,
+      })),
+      ...photos.map((item) => ({
+        id: `photo-${item.id}`,
+        sourceId: item.id,
+        date: item.photo_date,
+        createdAt: item.created_at,
+        source: "memory" as const,
+        category: item.category,
+        caption: item.caption || "那天留下的生活照片",
+        signedUrl: item.signed_url,
+        owner: profileMap.get(item.user_id) ?? null,
+      })),
+    ].sort(
+      (a, b) =>
+        b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt),
+    ),
+  };
 }
 
 export async function getProfileData() {
@@ -338,34 +428,62 @@ export async function getProfileData() {
 }
 
 export async function getAdminDashboard() {
-  await requireAdmin();
+  const { profile } = await requireAdmin();
   const supabase = await createClient();
-  const [profilesRes, walletsRes, checkinsRes, ordersRes, transactionsRes] =
-    await Promise.all([
-      supabase
-        .from("profiles")
-        .select("*")
-        .eq("role", "user")
-        .order("created_at")
-        .limit(1),
-      supabase.from("wallet_balances").select("*"),
-      supabase
-        .from("checkins")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(1000),
-      supabase
-        .from("orders")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(1000),
-      supabase
-        .from("wallet_transactions")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(1000),
-    ]);
-  const user = ((profilesRes.data ?? []) as Profile[])[0] ?? null;
+  const today = shanghaiToday();
+  const [
+    profilesRes,
+    relationshipRes,
+    walletsRes,
+    checkinsRes,
+    ordersRes,
+    transactionsRes,
+    moodsRes,
+    responsesRes,
+    notesRes,
+    wishesRes,
+    wishMetaRes,
+  ] = await Promise.all([
+    supabase.from("profiles").select("*").order("created_at"),
+    supabase
+      .from("relationship_settings")
+      .select("*")
+      .eq("id", true)
+      .maybeSingle(),
+    supabase.from("wallet_balances").select("*"),
+    supabase
+      .from("checkins")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(1000),
+    supabase
+      .from("orders")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(1000),
+    supabase
+      .from("wallet_transactions")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(1000),
+    supabase.from("moods").select("*").eq("mood_date", today),
+    supabase
+      .from("mood_responses")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(100),
+    supabase.from("daily_notes").select("*").eq("note_date", today),
+    supabase
+      .from("wishes")
+      .select("*")
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(10),
+    supabase.from("wish_admin_meta").select("*"),
+  ]);
+  const profiles = (profilesRes.data ?? []) as Profile[];
+  const relationship = relationshipRes.data as RelationshipSettings | null;
+  const user = resolvePartnerProfile(profile, profiles, relationship);
   const wallets = (walletsRes.data ?? []) as WalletBalance[];
   const wallet = user
     ? (wallets.find((item) => item.user_id === user.id) ?? null)
@@ -374,13 +492,53 @@ export async function getAdminDashboard() {
   const userCheckins = user
     ? checkins.filter((item) => item.user_id === user.id)
     : [];
-  const orders = (ordersRes.data ?? []) as Order[];
-  const transactions = (transactionsRes.data ?? []) as WalletTransaction[];
-  const today = shanghaiToday();
+  const orders = ((ordersRes.data ?? []) as Order[]).filter(
+    (item) => item.user_id === user?.id,
+  );
+  const transactions = (
+    (transactionsRes.data ?? []) as WalletTransaction[]
+  ).filter((item) => item.user_id === user?.id);
+  const mood =
+    ((moodsRes.data ?? []) as Mood[]).find(
+      (item) => item.user_id === user?.id,
+    ) ?? null;
+  const response = mood
+    ? (((responsesRes.data ?? []) as MoodResponse[]).find(
+        (item) => item.mood_id === mood.id,
+      ) ?? null)
+    : null;
+  const note =
+    ((notesRes.data ?? []) as DailyNote[]).find(
+      (item) => item.user_id === user?.id,
+    ) ?? null;
+  const wishMeta = (wishMetaRes.data ?? []) as WishAdminMeta[];
+  const recentWishes = ((wishesRes.data ?? []) as Wish[])
+    .filter((item) => item.user_id === user?.id)
+    .slice(0, 3)
+    .map((wish) => ({
+      wish,
+      meta: wishMeta.find((item) => item.wish_id === wish.id) ?? null,
+    }));
   const monthPrefix = today.slice(0, 7);
   return {
     user,
     wallet,
+    today,
+    mood,
+    response,
+    note,
+    lunchDone: userCheckins.some(
+      (item) => item.checkin_date === today && item.type === "lunch",
+    ),
+    dinnerDone: userCheckins.some(
+      (item) => item.checkin_date === today && item.type === "dinner",
+    ),
+    recentWishes,
+    actionOrders: orders
+      .filter((item) =>
+        ["pending", "approved", "pending_fulfillment"].includes(item.status),
+      )
+      .slice(0, 4),
     streak: calculateStreak(userCheckins, today),
     monthCompleteDays: new Set(
       userCheckins
@@ -404,7 +562,7 @@ export async function getAdminDashboard() {
     ),
     pendingOrders: orders.filter((item) => item.status === "pending").length,
     orderCount: orders.length,
-    recentCheckins: await signCheckinImages(checkins.slice(0, 6)),
+    recentCheckins: await signCheckinImages(userCheckins.slice(0, 6)),
     recentOrders: orders.slice(0, 6),
   };
 }

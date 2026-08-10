@@ -29,7 +29,7 @@ export default async function DailyReportPage({
   return (
     <main className="page-shell max-w-3xl py-6 sm:py-10">
       <Link
-        href={`/calendar?month=${date.slice(0, 7)}&date=${date}`}
+        href={`/calendar/${date}`}
         className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-muted"
       >
         <ArrowLeft className="size-4" />

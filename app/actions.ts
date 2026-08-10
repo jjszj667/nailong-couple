@@ -6,8 +6,10 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin, requireUser } from "@/lib/auth";
 import { getCheckinWindow } from "@/lib/checkin-windows";
+import { dateInShanghai } from "@/lib/life";
 import type {
   CheckinType,
+  MemoryPhotoCategory,
   MoodValue,
   ProductCategory,
   ProductStatus,
@@ -595,6 +597,7 @@ export async function saveCalendarEventAction(formData: FormData) {
       eventType: z.string().trim().min(1).max(30),
       note: z.string().trim().max(800),
       repeatType: z.enum(["none", "yearly"]),
+      isStoryEvent: z.boolean(),
     })
     .safeParse({
       id: formData.get("id") || "",
@@ -603,6 +606,7 @@ export async function saveCalendarEventAction(formData: FormData) {
       eventType: formData.get("event_type") || "special",
       note: formData.get("note") || "",
       repeatType: formData.get("repeat_type") || "none",
+      isStoryEvent: formData.get("is_story_event") === "on",
     });
   const returnTo = String(formData.get("return_to") || "/calendar");
   if (!parsed.success)
@@ -614,6 +618,7 @@ export async function saveCalendarEventAction(formData: FormData) {
     event_type: parsed.data.eventType,
     note: parsed.data.note,
     repeat_type: parsed.data.repeatType,
+    is_story_event: parsed.data.isStoryEvent,
   };
   const result = parsed.data.id
     ? await supabase
@@ -659,6 +664,123 @@ async function uploadLifeImage(file: File, userId: string, folder: string) {
     .upload(path, file, { contentType: file.type, upsert: false });
   if (error) throw error;
   return path;
+}
+
+const memoryPhotoCategories = [
+  "daily",
+  "date",
+  "travel",
+  "food",
+  "gift",
+  "selfie",
+  "scenery",
+  "special",
+  "other",
+] as const;
+
+export async function saveMemoryPhotosAction(formData: FormData) {
+  const { profile } = await requireUser();
+  const parsed = z
+    .object({
+      photoDate: z.iso.date(),
+      caption: z.string().trim().max(240),
+      category: z.enum(memoryPhotoCategories),
+    })
+    .safeParse({
+      photoDate: formData.get("photo_date"),
+      caption: formData.get("caption") || "",
+      category: formData.get("category") || "daily",
+    });
+  const returnTo = parsed.success
+    ? `/calendar/${parsed.data.photoDate}`
+    : "/memories";
+  if (!parsed.success || parsed.data.photoDate > dateInShanghai()) {
+    redirect(target(returnTo, "error", "请检查照片日期、分类和说明。"));
+  }
+
+  const files = formData
+    .getAll("images")
+    .filter((item): item is File => item instanceof File && item.size > 0);
+  if (files.length < 1 || files.length > 9) {
+    redirect(target(returnTo, "error", "每次请选择 1～9 张生活照片。"));
+  }
+
+  const supabase = await createClient();
+  const { count: existingCount, error: countError } = await supabase
+    .from("memory_photos")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", profile.id)
+    .eq("photo_date", parsed.data.photoDate);
+  if (countError) {
+    redirect(target(returnTo, "error", errorText(countError)));
+  }
+  if ((existingCount ?? 0) + files.length > 9) {
+    redirect(
+      target(
+        returnTo,
+        "error",
+        `这一天最多保存 9 张生活照片，你还可以添加 ${Math.max(0, 9 - (existingCount ?? 0))} 张。`,
+      ),
+    );
+  }
+  const uploadedPaths: string[] = [];
+  try {
+    for (const file of files) {
+      validateImage(file);
+      uploadedPaths.push(await uploadLifeImage(file, profile.id, "memories"));
+    }
+    const { error } = await supabase.from("memory_photos").insert(
+      uploadedPaths.map((imageUrl) => ({
+        user_id: profile.id,
+        photo_date: parsed.data.photoDate,
+        image_url: imageUrl,
+        caption: parsed.data.caption,
+        category: parsed.data.category as MemoryPhotoCategory,
+      })),
+    );
+    if (error) throw error;
+  } catch (error) {
+    if (uploadedPaths.length) {
+      await supabase.storage.from("life-images").remove(uploadedPaths);
+    }
+    redirect(target(returnTo, "error", errorText(error)));
+  }
+
+  revalidatePath("/", "layout");
+  redirect(target(returnTo, "ok", `${files.length} 张照片已经放进这一天啦。`));
+}
+
+export async function deleteMemoryPhotoAction(formData: FormData) {
+  const { profile } = await requireUser();
+  const parsed = z
+    .object({ id: z.uuid(), date: z.iso.date() })
+    .safeParse({
+      id: formData.get("photo_id"),
+      date: formData.get("photo_date"),
+    });
+  const returnTo = parsed.success
+    ? `/calendar/${parsed.data.date}`
+    : "/memories";
+  if (!parsed.success) {
+    redirect(target(returnTo, "error", "没有找到这张生活照片。"));
+  }
+  const supabase = await createClient();
+  const { data: photo } = await supabase
+    .from("memory_photos")
+    .select("image_url")
+    .eq("id", parsed.data.id)
+    .eq("user_id", profile.id)
+    .maybeSingle();
+  if (!photo) redirect(target(returnTo, "error", "你只能删除自己上传的照片。"));
+  const { error } = await supabase
+    .from("memory_photos")
+    .delete()
+    .eq("id", parsed.data.id)
+    .eq("user_id", profile.id);
+  if (error) redirect(target(returnTo, "error", errorText(error)));
+  await supabase.storage.from("life-images").remove([photo.image_url]);
+  revalidatePath("/", "layout");
+  redirect(target(returnTo, "ok", "这张照片已经移出回忆。"));
 }
 
 export async function saveWishAction(formData: FormData) {

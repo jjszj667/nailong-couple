@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
+  BookOpen,
   CalendarDays,
   Camera,
   Check,
@@ -10,6 +11,7 @@ import {
   MessageCircleHeart,
   NotebookPen,
   Sparkles,
+  Target,
   Utensils,
 } from "lucide-react";
 import { getHomePageData } from "@/lib/life-data";
@@ -43,16 +45,33 @@ export default async function HomePage({
   return (
     <main className="page-shell py-5 sm:py-9">
       <Flash {...flash} />
-      <section className="relative overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-[#f9d766] via-[#f6c84c] to-[#eeae32] p-6 shadow-[0_20px_45px_rgba(203,140,22,0.2)] sm:p-9">
+      <section
+        className={`relative overflow-hidden rounded-[2.25rem] p-6 shadow-[0_20px_45px_rgba(203,140,22,0.2)] sm:p-9 ${life.anniversaryMode ? "bg-gradient-to-br from-rose-200 via-amber-100 to-orange-200" : "bg-gradient-to-br from-[#f9d766] via-[#f6c84c] to-[#eeae32]"}`}
+      >
         <div className="absolute -right-8 -top-12 size-52 rounded-full bg-white/20" />
+        {life.anniversaryMode && (
+          <>
+            <Heart className="absolute left-[52%] top-5 size-5 fill-rose-300 text-rose-300" />
+            <Sparkles className="absolute right-[22%] top-10 size-6 text-rose-400" />
+          </>
+        )}
         <div className="relative grid items-center gap-4 sm:grid-cols-[1fr_auto]">
           <div>
             <p className="text-sm font-bold text-brown/65">
               你好，{data.profile.nickname}
             </p>
             <h1 className="mt-2 max-w-xl text-2xl font-black leading-tight tracking-tight text-brown sm:text-4xl">
-              奶龙提醒你：今天有好好吃饭吗？
+              {life.anniversaryMode
+                ? `❤️ 今天是${life.anniversaryMode.title}`
+                : "奶龙提醒你：今天有好好吃饭吗？"}
             </h1>
+            {life.anniversaryMode && (
+              <p className="mt-2 text-sm font-bold text-brown/65">
+                今天是属于我们的特别一天。
+                {life.otherTodayEvents.length > 0 &&
+                  ` 还有 ${life.otherTodayEvents.length} 个特别日子也在今天。`}
+              </p>
+            )}
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <span className="rounded-full bg-white/55 px-4 py-2 text-sm font-bold text-brown">
                 当前奶龙币 <strong className="ml-1 text-lg">{total}</strong>
@@ -118,7 +137,7 @@ export default async function HomePage({
           )}
           {highlightedEvent ? (
             <Link
-              href={`/calendar?month=${highlightedEvent.occurrence.slice(0, 7)}&date=${highlightedEvent.occurrence}`}
+              href={`/calendar/${highlightedEvent.occurrence}`}
               className={`relative mt-4 flex items-center justify-between gap-3 rounded-2xl p-3 transition hover:-translate-y-0.5 ${
                 highlightedEvent.reminderLevel === "today"
                   ? "bg-rose-100 text-brown"
@@ -257,6 +276,42 @@ export default async function HomePage({
             ) : (
               <MoodSelector date={data.today} />
             )}
+            {life.partner && (
+              <div className="mt-4 rounded-2xl bg-rose-50 p-3">
+                {(() => {
+                  const partnerMood = life.coupleMoods.find(
+                    (item) => item.user_id === life.partner?.id,
+                  );
+                  const partnerMeta = partnerMood
+                    ? moodMeta(partnerMood.value)
+                    : null;
+                  return (
+                    <div className="flex items-center gap-3">
+                      {partnerMeta ? (
+                        <MoodIcon
+                          image={partnerMeta.image}
+                          label={partnerMeta.label}
+                          className="size-10"
+                          sizes="40px"
+                        />
+                      ) : (
+                        <span className="flex size-10 items-center justify-center rounded-full bg-white text-muted">
+                          —
+                        </span>
+                      )}
+                      <div>
+                        <p className="text-xs font-bold text-muted">
+                          {life.partner.nickname} 今天的心情
+                        </p>
+                        <p className="mt-0.5 font-bold text-brown">
+                          {partnerMeta?.label ?? "还没有留下心情"}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
             <MoodTrend
               moods={life.recentMoods}
               dates={life.trendDates}
@@ -317,10 +372,111 @@ export default async function HomePage({
                 {life.note ? "更新这句话" : "留在今天"}
               </SubmitButton>
             </form>
+            {life.partner && (
+              <div className="mt-4 rounded-2xl bg-amber-50 p-3">
+                <p className="text-xs font-bold text-nailong-deep">
+                  {life.partner.nickname} 今天留下的一句话
+                </p>
+                <p className="mt-1 text-sm leading-6 text-brown">
+                  {life.coupleNotes.find(
+                    (item) => item.user_id === life.partner?.id,
+                  )?.content ?? "今天还没有留下记录。"}
+                </p>
+              </div>
+            )}
           </Card>
         </div>
 
         <div className="space-y-6">
+          {data.goalProduct && (
+            <Card className="bg-gradient-to-br from-amber-50 to-orange-50">
+              <div className="flex items-center gap-2">
+                <Target className="size-5 text-nailong-deep" />
+                <p className="text-xs font-bold text-nailong-deep">
+                  下一份期待
+                </p>
+              </div>
+              <div className="mt-3 flex items-center gap-3">
+                <MediaImage
+                  src={getPublicImageUrl(
+                    "product-images",
+                    data.goalProduct.image_url,
+                  )}
+                  alt={data.goalProduct.name}
+                  className="size-14 rounded-2xl"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-black text-brown">
+                    {data.goalProduct.name}
+                  </p>
+                  <p className="mt-1 text-xs text-muted">
+                    {data.goalRemaining > 0
+                      ? `还差 ${data.goalRemaining} 奶龙币`
+                      : "已经攒够啦！"}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-nailong to-orange"
+                  style={{ width: `${data.goalProgress}%` }}
+                />
+              </div>
+              <div className="mt-2 flex items-center justify-between text-xs text-muted">
+                <span>
+                  {balance} / {data.goalProduct.price}
+                </span>
+                <Link
+                  href={`/shop/${data.goalProduct.id}`}
+                  className="font-bold text-nailong-deep"
+                >
+                  去看看 →
+                </Link>
+              </div>
+            </Card>
+          )}
+
+          {life.randomMemory && (
+            <Card className="overflow-hidden p-0">
+              {life.randomMemory.signed_url && (
+                <MediaImage
+                  src={life.randomMemory.signed_url}
+                  alt={life.randomMemory.title}
+                  className="aspect-[16/7] w-full"
+                />
+              )}
+              <div className="p-5">
+                <div className="flex items-center gap-2 text-nailong-deep">
+                  <BookOpen className="size-5" />
+                  <p className="text-xs font-bold">
+                    奶龙翻到了一页以前的故事 📖
+                  </p>
+                </div>
+                <p className="mt-3 text-xs text-muted">
+                  {life.randomMemory.isOnThisDay
+                    ? "那年今日"
+                    : `${life.randomMemory.daysAgo} 天前`}
+                  {life.randomMemory.owner &&
+                    ` · ${life.randomMemory.owner.nickname}`}
+                </p>
+                <p className="mt-1 font-black text-brown">
+                  {life.randomMemory.title}
+                </p>
+                {life.randomMemory.body && (
+                  <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted">
+                    {life.randomMemory.body}
+                  </p>
+                )}
+                <Link
+                  href={`/calendar/${life.randomMemory.memory_date}`}
+                  className="mt-3 inline-flex text-xs font-bold text-nailong-deep"
+                >
+                  看看那一天 →
+                </Link>
+              </div>
+            </Card>
+          )}
+
           {life.wishes.length > 0 && (
             <Card>
               <div className="flex items-center justify-between">

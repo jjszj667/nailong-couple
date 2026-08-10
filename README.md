@@ -1,6 +1,6 @@
 # Jj的快乐小屋
 
-一个只供两个人使用的情侣生活记录与奖励兑换小世界。普通用户可以记录吃饭、心情、每日一句、纪念日、愿望与足迹，并用“奶龙币”兑换约会、陪伴、小礼物和惊喜箱。登录、图片、钱包、流水、生活记录、兑换、审核与权限均落在 Supabase，关键资金操作由 PostgreSQL 原子函数完成。
+一个只供两个人使用的情侣生活记录与奖励兑换小世界。两个人都可以记录吃饭、心情、每日一句、纪念日、照片、愿望与足迹；`admin` / `user` 只负责底层权限和奖励规则，不作为前台情侣身份。登录、图片、钱包、流水、生活记录、兑换、审核与权限均落在 Supabase，关键资金操作由 PostgreSQL 原子函数完成。
 
 ## 已实现功能
 
@@ -14,12 +14,13 @@
 - 商品新建、编辑、删除、库存、上下架、推荐、隐藏和图片上传
 - 订单待审核、等待兑现、完成、拒绝、取消全流程与状态事件
 - 管理员主动发放或扣除奶龙币（强制原因、禁止负余额、同步流水）
-- 吃饭照片墙、日期筛选、午间/晚间标签和图片放大
+- “我们的回忆”照片墙，整合吃饭照片与双方生活照片，支持日期、月份与分类浏览
 - 首页留言、个人昵称与头像、移动端底部导航
 - 固定五栏 Bottom Navigation：首页、签到、商店、日历、我的
-- 每日 7 档心情、可选标签与备注；北京时间当天首次记录按后台规则奖励一次
+- 双方每日 7 档心情、可选标签与备注；仅 `user` 北京时间当天首次记录按后台规则奖励一次
 - 管理员心情回应与一次性可选发币
-- 统一情侣日历、历史 Day Detail、纪念日/年度重复、今日一句与奶龙日报
+- 统一情侣日历、完整 `/calendar/[date]` Day Detail、纪念日/年度重复、双人今日一句与奶龙日报
+- “我们的故事”重要事件时间线、首页稳定随机回忆、兑换目标进度与纪念日模式
 - 关系开始日期与“我们第 X 天”自动计算
 - 愿望清单与管理员独立秘密准备状态
 - 惊喜箱商品、后台准备、用户主动揭晓与轻量动画
@@ -87,8 +88,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=你的-anon-key
 2. 打开 **SQL Editor → New query**。
 3. 全新数据库先运行 [`supabase/migrations/202608090001_initial_schema.sql`](supabase/migrations/202608090001_initial_schema.sql)。
 4. 然后运行 [`supabase/migrations/202608100002_life_world_v2.sql`](supabase/migrations/202608100002_life_world_v2.sql)；它包含当前正确的签到时间窗补丁和全部 V2 增量结构。
-5. 最后运行 [`supabase/migrations/202608100003_relationship_partners.sql`](supabase/migrations/202608100003_relationship_partners.sql)；它会增量加入情侣双方关联、昵称读取策略和首页聚合查询。
-6. 已经运行过前两个正式迁移的数据库不要重复执行它们，也不需要补跑历史的 `202608100001_checkin_windows.sql`，本次升级只运行 `202608100003_relationship_partners.sql`。
+5. 接着运行 [`supabase/migrations/202608100003_relationship_partners.sql`](supabase/migrations/202608100003_relationship_partners.sql)；它会增量加入情侣双方关联、昵称读取策略和首页聚合查询。
+6. 最后运行 [`supabase/migrations/202608100004_couple_space.sql`](supabase/migrations/202608100004_couple_space.sql)；它会加入双人生活记录读取权限、生活照片、故事事件和新版首页聚合查询。
+7. 已经运行过 `001`、`002`、`003` 的数据库不要重复执行它们，本次升级只需运行 `202608100004_couple_space.sql`。如果 `003` 尚未执行，则按 `003`、`004` 的顺序各执行一次。
 
 也可以使用 Supabase CLI：
 
@@ -135,7 +137,7 @@ npx supabase db push
 - `avatars`：公开读取；用户只能写自己 UUID 文件夹
 - `life-images`：仅登录后的两人可读取；用户写自己的 UUID 文件夹，管理员可管理
 
-三者均限制为 JPG/JPEG、PNG、WebP，最大 5MB。无需在 Dashboard 手动重复创建。
+四个 bucket 均限制为 JPG/JPEG、PNG、WebP，最大 5MB。无需在 Dashboard 手动重复创建。
 
 ## 三、Auth 与两个账号
 
@@ -280,4 +282,4 @@ npm run start
 - 惊喜揭晓图片字段已预留，当前后台先支持文字惊喜与留言。
 - 没有自动图片压缩；客户端和 Storage 都限制 5MB。
 - 没有找回密码页面；两人站点可先由 Supabase Dashboard 管理账号。
-- V2 migration 执行后才能进行真实的 RLS、并发奖励和跨账号端到端验收。
+- 最新 migration 执行后才能进行真实的双账号 RLS、生活照片和跨账号端到端验收。

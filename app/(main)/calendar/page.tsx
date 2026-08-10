@@ -101,7 +101,7 @@ export default async function CalendarPage({
               {reminders.map((item) => (
                 <Link
                   key={item.event.id}
-                  href={`/calendar?month=${item.occurrence.slice(0, 7)}&date=${item.occurrence}`}
+                  href={`/calendar/${item.occurrence}`}
                   className={`flex items-center justify-between gap-3 rounded-2xl p-3 ${item.reminderLevel === "today" ? "bg-rose-100" : item.reminderLevel === "soon" ? "bg-orange-100" : "bg-amber-100"}`}
                 >
                   <div className="min-w-0">
@@ -159,7 +159,7 @@ export default async function CalendarPage({
             {cells.map((date, index) =>
               date ? (
                 (() => {
-                  const mood = data.moods.find(
+                  const dayMoods = data.moods.filter(
                     (item) => item.mood_date === date,
                   );
                   const completed = data.checkins.filter(
@@ -170,7 +170,7 @@ export default async function CalendarPage({
                   return (
                     <Link
                       key={date}
-                      href={`/calendar?month=${data.bounds.month}&date=${date}`}
+                      href={`/calendar/${date}`}
                       className={`relative min-h-20 min-w-0 rounded-2xl border p-1.5 transition sm:min-h-24 sm:p-2 ${selected ? "border-amber-400 bg-amber-100" : date === today ? "border-amber-300 bg-amber-50" : "border-line/70 bg-white hover:bg-amber-50"}`}
                     >
                       <span
@@ -179,14 +179,20 @@ export default async function CalendarPage({
                         {Number(date.slice(-2))}
                       </span>
                       <div className="mt-1 flex flex-wrap items-center gap-1">
-                        {mood && (
-                          <MoodIcon
-                            image={moodMeta(mood.value).image}
-                            label={moodMeta(mood.value).label}
-                            className="size-6"
-                            sizes="24px"
-                          />
-                        )}
+                        {dayMoods.slice(0, 2).map((mood) => {
+                          const owner = data.members.find(
+                            (member) => member.id === mood.user_id,
+                          );
+                          const meta = moodMeta(mood.value);
+                          return (
+                            <span
+                              key={mood.id}
+                              className="size-2.5 rounded-full ring-2 ring-white"
+                              style={{ backgroundColor: meta.color }}
+                              title={`${owner?.nickname ?? "我们"}：${meta.label}`}
+                            />
+                          );
+                        })}
                         {events.length > 0 && (
                           <span
                             className="size-2 rounded-full bg-rose-400"
@@ -218,7 +224,7 @@ export default async function CalendarPage({
                 className="size-5"
                 sizes="20px"
               />
-              心情
+              双人心情
             </span>
             <span>● 纪念日</span>
             <span>✓✓ 两餐完成</span>
@@ -396,6 +402,15 @@ export default async function CalendarPage({
                               maxLength={800}
                               defaultValue={event.note}
                             />
+                            <label className="flex items-center gap-2 rounded-2xl bg-rose-50 px-3 py-2 text-xs font-bold text-brown">
+                              <input
+                                name="is_story_event"
+                                type="checkbox"
+                                defaultChecked={event.is_story_event}
+                                className="size-4 accent-rose-400"
+                              />
+                              加入“我们的故事”时间线
+                            </label>
                             <SubmitButton pendingText="正在更新…">
                               保存修改
                             </SubmitButton>
@@ -495,6 +510,14 @@ export default async function CalendarPage({
                     maxLength={800}
                     placeholder="补充一点想记住的细节（可选）"
                   />
+                  <label className="flex items-center gap-2 rounded-2xl bg-rose-50 px-3 py-2 text-sm font-bold text-brown">
+                    <input
+                      name="is_story_event"
+                      type="checkbox"
+                      className="size-4 accent-rose-400"
+                    />
+                    加入“我们的故事”时间线
+                  </label>
                   <SubmitButton pendingText="正在收藏…">
                     <CalendarHeart className="size-4" />
                     收藏这一天
