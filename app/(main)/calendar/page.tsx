@@ -303,6 +303,9 @@ export default async function CalendarPage({
                     const next = data.upcomingEvents.find(
                       (item) => item.event.id === event.id,
                     );
+                    const canManageEvent =
+                      data.profile.role === "admin" ||
+                      event.created_by === data.profile.id;
                     return (
                       <div
                         key={event.id}
@@ -334,88 +337,92 @@ export default async function CalendarPage({
                               </p>
                             )}
                           </div>
-                          <form action={deleteCalendarEventAction}>
-                            <input
-                              type="hidden"
-                              name="event_id"
-                              value={event.id}
-                            />
-                            <input
-                              type="hidden"
-                              name="return_to"
-                              value={returnTo}
-                            />
-                            <button
-                              className="flex size-9 items-center justify-center rounded-full bg-white text-muted"
-                              aria-label="删除纪念日"
-                            >
-                              <Trash2 className="size-4" />
-                            </button>
-                          </form>
-                        </div>
-                        <details className="mt-3">
-                          <summary className="cursor-pointer text-xs font-bold text-rose-500">
-                            编辑这件事
-                          </summary>
-                          <form
-                            action={saveCalendarEventAction}
-                            className="mt-3 space-y-2 rounded-2xl bg-white/75 p-3"
-                          >
-                            <input type="hidden" name="id" value={event.id} />
-                            <input
-                              type="hidden"
-                              name="return_to"
-                              value={returnTo}
-                            />
-                            <input
-                              name="title"
-                              className="field"
-                              required
-                              maxLength={80}
-                              defaultValue={event.title}
-                            />
-                            <input
-                              name="event_date"
-                              type="date"
-                              className="field"
-                              required
-                              defaultValue={event.event_date}
-                            />
-                            <div className="grid grid-cols-2 gap-2">
+                          {canManageEvent && (
+                            <form action={deleteCalendarEventAction}>
                               <input
-                                name="event_type"
-                                className="field"
-                                defaultValue={event.event_type}
+                                type="hidden"
+                                name="event_id"
+                                value={event.id}
                               />
-                              <select
-                                name="repeat_type"
-                                className="field"
-                                defaultValue={event.repeat_type}
+                              <input
+                                type="hidden"
+                                name="return_to"
+                                value={returnTo}
+                              />
+                              <button
+                                className="flex size-9 items-center justify-center rounded-full bg-white text-muted"
+                                aria-label="删除纪念日"
                               >
-                                <option value="none">仅这一次</option>
-                                <option value="yearly">每年重复</option>
-                              </select>
-                            </div>
-                            <textarea
-                              name="note"
-                              className="field min-h-16"
-                              maxLength={800}
-                              defaultValue={event.note}
-                            />
-                            <label className="flex items-center gap-2 rounded-2xl bg-rose-50 px-3 py-2 text-xs font-bold text-brown">
+                                <Trash2 className="size-4" />
+                              </button>
+                            </form>
+                          )}
+                        </div>
+                        {canManageEvent && (
+                          <details className="mt-3">
+                            <summary className="cursor-pointer text-xs font-bold text-rose-500">
+                              编辑这件事
+                            </summary>
+                            <form
+                              action={saveCalendarEventAction}
+                              className="mt-3 space-y-2 rounded-2xl bg-white/75 p-3"
+                            >
+                              <input type="hidden" name="id" value={event.id} />
                               <input
-                                name="is_story_event"
-                                type="checkbox"
-                                defaultChecked={event.is_story_event}
-                                className="size-4 accent-rose-400"
+                                type="hidden"
+                                name="return_to"
+                                value={returnTo}
                               />
-                              加入“我们的故事”时间线
-                            </label>
-                            <SubmitButton pendingText="正在更新…">
-                              保存修改
-                            </SubmitButton>
-                          </form>
-                        </details>
+                              <input
+                                name="title"
+                                className="field"
+                                required
+                                maxLength={80}
+                                defaultValue={event.title}
+                              />
+                              <input
+                                name="event_date"
+                                type="date"
+                                className="field"
+                                required
+                                defaultValue={event.event_date}
+                              />
+                              <div className="grid grid-cols-2 gap-2">
+                                <input
+                                  name="event_type"
+                                  className="field"
+                                  defaultValue={event.event_type}
+                                />
+                                <select
+                                  name="repeat_type"
+                                  className="field"
+                                  defaultValue={event.repeat_type}
+                                >
+                                  <option value="none">仅这一次</option>
+                                  <option value="yearly">每年重复</option>
+                                </select>
+                              </div>
+                              <textarea
+                                name="note"
+                                className="field min-h-16"
+                                maxLength={800}
+                                defaultValue={event.note}
+                              />
+                              <label className="flex items-center gap-2 rounded-2xl bg-rose-50 px-3 py-2 text-xs font-bold text-brown">
+                                <input
+                                  name="is_story_event"
+                                  type="checkbox"
+                                  defaultChecked={event.is_story_event}
+                                  className="size-4 accent-rose-400"
+                                />
+                                加入“我们的故事”时间线
+                              </label>
+                              <SubmitButton pendingText="正在更新…">
+                                保存修改
+                              </SubmitButton>
+                            </form>
+                          </details>
+                        )}
                       </div>
                     );
                   })}

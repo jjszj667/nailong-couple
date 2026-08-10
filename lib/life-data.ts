@@ -526,6 +526,7 @@ export async function getCalendarData(
     )
     .sort((a, b) => a.occurrence.localeCompare(b.occurrence));
   return {
+    profile,
     bounds,
     selectedDate: date,
     moods,

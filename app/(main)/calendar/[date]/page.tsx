@@ -14,7 +14,9 @@ import {
   Utensils,
 } from "lucide-react";
 import {
+  deleteCalendarEventAction,
   deleteMemoryPhotoAction,
+  saveCalendarEventAction,
   saveDailyNoteAction,
   saveMemoryPhotosAction,
 } from "@/app/actions";
@@ -367,6 +369,97 @@ export default async function DayDetailPage({
                     </p>
                     {event.note && (
                       <p className="mt-1 text-xs text-muted">{event.note}</p>
+                    )}
+                    {(data.profile.role === "admin" ||
+                      event.created_by === data.profile.id) && (
+                      <details className="mt-3">
+                        <summary className="cursor-pointer text-xs font-bold text-rose-500">
+                          修改或删除这个纪念日
+                        </summary>
+                        <form
+                          action={saveCalendarEventAction}
+                          className="mt-3 space-y-2 rounded-2xl bg-white/80 p-3"
+                        >
+                          <input type="hidden" name="id" value={event.id} />
+                          <input
+                            type="hidden"
+                            name="return_to"
+                            value={`/calendar/${date}`}
+                          />
+                          <input
+                            name="title"
+                            className="field"
+                            required
+                            maxLength={80}
+                            defaultValue={event.title}
+                          />
+                          <input
+                            name="event_date"
+                            type="date"
+                            className="field"
+                            required
+                            defaultValue={event.event_date}
+                          />
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            <input
+                              name="event_type"
+                              className="field"
+                              required
+                              maxLength={30}
+                              defaultValue={event.event_type}
+                            />
+                            <select
+                              name="repeat_type"
+                              className="field"
+                              defaultValue={event.repeat_type}
+                            >
+                              <option value="none">仅这一次</option>
+                              <option value="yearly">每年重复</option>
+                            </select>
+                          </div>
+                          <textarea
+                            name="note"
+                            className="field min-h-20"
+                            maxLength={800}
+                            defaultValue={event.note}
+                          />
+                          <label className="flex items-center gap-2 rounded-2xl bg-rose-50 px-3 py-2 text-xs font-bold text-brown">
+                            <input
+                              name="is_story_event"
+                              type="checkbox"
+                              defaultChecked={event.is_story_event}
+                              className="size-4 accent-rose-400"
+                            />
+                            加入“我们的故事”时间线
+                          </label>
+                          <div className="flex flex-wrap gap-2">
+                            <SubmitButton pendingText="正在更新…">
+                              保存修改
+                            </SubmitButton>
+                          </div>
+                        </form>
+                        <form
+                          action={deleteCalendarEventAction}
+                          className="mt-2"
+                        >
+                          <input
+                            type="hidden"
+                            name="event_id"
+                            value={event.id}
+                          />
+                          <input
+                            type="hidden"
+                            name="return_to"
+                            value={`/calendar/${date}`}
+                          />
+                          <SubmitButton
+                            className="bg-stone-100 text-stone-600 shadow-none"
+                            pendingText="正在删除…"
+                          >
+                            <Trash2 className="size-4" /> 删除纪念日
+                          </SubmitButton>
+                        </form>
+                      </details>
                     )}
                   </div>
                 ))}

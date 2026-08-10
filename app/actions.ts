@@ -620,16 +620,41 @@ export async function saveCalendarEventAction(formData: FormData) {
     repeat_type: parsed.data.repeatType,
     is_story_event: parsed.data.isStoryEvent,
   };
+  if (parsed.data.id) {
+    const { data: existingEvent, error: existingError } = await supabase
+      .from("calendar_events")
+      .select("created_by")
+      .eq("id", parsed.data.id)
+      .maybeSingle();
+    if (existingError || !existingEvent) {
+      redirect(
+        target(
+          returnTo,
+          "error",
+          existingError ? errorText(existingError) : "没有找到这个纪念日。",
+        ),
+      );
+    }
+    if (profile.role !== "admin" && existingEvent.created_by !== profile.id) {
+      redirect(target(returnTo, "error", "你只能修改自己创建的纪念日。"));
+    }
+  }
   const result = parsed.data.id
     ? await supabase
         .from("calendar_events")
         .update(payload)
         .eq("id", parsed.data.id)
+        .select("id")
+        .maybeSingle()
     : await supabase
         .from("calendar_events")
-        .insert({ ...payload, created_by: profile.id });
+        .insert({ ...payload, created_by: profile.id })
+        .select("id")
+        .single();
   if (result.error)
     redirect(target(returnTo, "error", errorText(result.error)));
+  if (!result.data)
+    redirect(target(returnTo, "error", "纪念日没有更新，请刷新后再试。"));
   revalidatePath("/", "layout");
   redirect(
     target(
@@ -641,16 +666,37 @@ export async function saveCalendarEventAction(formData: FormData) {
 }
 
 export async function deleteCalendarEventAction(formData: FormData) {
-  await requireUser();
+  const { profile } = await requireUser();
   const id = z.uuid().safeParse(formData.get("event_id"));
   const returnTo = String(formData.get("return_to") || "/calendar");
   if (!id.success) redirect(target(returnTo, "error", "没有找到这个纪念日。"));
   const supabase = await createClient();
-  const { error } = await supabase
+  const { data: existingEvent, error: existingError } = await supabase
+    .from("calendar_events")
+    .select("created_by")
+    .eq("id", id.data)
+    .maybeSingle();
+  if (existingError || !existingEvent) {
+    redirect(
+      target(
+        returnTo,
+        "error",
+        existingError ? errorText(existingError) : "没有找到这个纪念日。",
+      ),
+    );
+  }
+  if (profile.role !== "admin" && existingEvent.created_by !== profile.id) {
+    redirect(target(returnTo, "error", "你只能删除自己创建的纪念日。"));
+  }
+  const { data: deletedEvent, error } = await supabase
     .from("calendar_events")
     .delete()
-    .eq("id", id.data);
+    .eq("id", id.data)
+    .select("id")
+    .maybeSingle();
   if (error) redirect(target(returnTo, "error", errorText(error)));
+  if (!deletedEvent)
+    redirect(target(returnTo, "error", "纪念日没有删除，请刷新后再试。"));
   revalidatePath("/", "layout");
   redirect(target(returnTo, "ok", "这个纪念日已经删除。"));
 }
@@ -752,12 +798,10 @@ export async function saveMemoryPhotosAction(formData: FormData) {
 
 export async function deleteMemoryPhotoAction(formData: FormData) {
   const { profile } = await requireUser();
-  const parsed = z
-    .object({ id: z.uuid(), date: z.iso.date() })
-    .safeParse({
-      id: formData.get("photo_id"),
-      date: formData.get("photo_date"),
-    });
+  const parsed = z.object({ id: z.uuid(), date: z.iso.date() }).safeParse({
+    id: formData.get("photo_id"),
+    date: formData.get("photo_date"),
+  });
   const returnTo = parsed.success
     ? `/calendar/${parsed.data.date}`
     : "/memories";
