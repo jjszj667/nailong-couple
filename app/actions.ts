@@ -117,6 +117,7 @@ export async function submitCheckinAction(formData: FormData) {
     redirect(target("/checkin", "error", "签到信息不完整，请重新选择。"));
   }
 
+  let uploadedPath: string | null = null;
   try {
     const checkinType = type as CheckinType;
     const window = getCheckinWindow(checkinType);
@@ -138,6 +139,7 @@ export async function submitCheckinAction(formData: FormData) {
         cacheControl: "3600",
       });
     if (uploadError) throw uploadError;
+    uploadedPath = path;
 
     const { error } = await supabase.rpc("submit_checkin", {
       p_type: checkinType,
@@ -146,6 +148,10 @@ export async function submitCheckinAction(formData: FormData) {
     });
     if (error) throw error;
   } catch (error) {
+    if (uploadedPath) {
+      const supabase = await createClient();
+      await supabase.storage.from("checkin-images").remove([uploadedPath]);
+    }
     redirect(target("/checkin", "error", errorText(error)));
   }
   revalidatePath("/");
