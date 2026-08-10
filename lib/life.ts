@@ -1,14 +1,14 @@
 import type { CalendarEvent, MoodValue } from "@/types/database";
 import { SHANGHAI_TIME_ZONE } from "@/lib/utils";
 
-export const MOODS: { value: MoodValue; label: string; emoji: string; color: string }[] = [
-  { value: "very_unpleasant", label: "很难过", emoji: "😢", color: "#9aa6b8" },
-  { value: "unpleasant", label: "难过", emoji: "☹️", color: "#aeb8c5" },
-  { value: "slightly_unpleasant", label: "有点低落", emoji: "😔", color: "#bdc3bd" },
-  { value: "neutral", label: "平静", emoji: "😌", color: "#d7c99f" },
-  { value: "slightly_pleasant", label: "还不错", emoji: "🙂", color: "#e8c56d" },
-  { value: "pleasant", label: "开心", emoji: "😊", color: "#f3b847" },
-  { value: "very_pleasant", label: "超级开心", emoji: "🥰", color: "#f19a55" },
+export const MOODS: { value: MoodValue; label: string; image: string; color: string }[] = [
+  { value: "very_unpleasant", label: "很难过", image: "/nailong/moods/very-unpleasant.webp", color: "#9aa6b8" },
+  { value: "unpleasant", label: "难过", image: "/nailong/moods/unpleasant.webp", color: "#aeb8c5" },
+  { value: "slightly_unpleasant", label: "有点低落", image: "/nailong/moods/slightly-unpleasant.webp", color: "#bdc3bd" },
+  { value: "neutral", label: "平静", image: "/nailong/moods/neutral.webp", color: "#d7c99f" },
+  { value: "slightly_pleasant", label: "还不错", image: "/nailong/moods/slightly-pleasant.webp", color: "#e8c56d" },
+  { value: "pleasant", label: "开心", image: "/nailong/moods/pleasant.webp", color: "#f3b847" },
+  { value: "very_pleasant", label: "超级开心", image: "/nailong/moods/very-pleasant.webp", color: "#f19a55" },
 ];
 
 export const MOOD_TAGS = [

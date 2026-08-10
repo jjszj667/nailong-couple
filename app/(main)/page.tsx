@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Coin } from "@/components/ui/coin";
 import { Flash } from "@/components/ui/flash";
 import { MediaImage } from "@/components/ui/media-image";
+import { MoodIcon } from "@/components/mood-icon";
 import { MoodSelector } from "@/components/mood-selector";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { getPublicImageUrl } from "@/lib/utils";
@@ -57,7 +58,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       <section className="mt-6 grid gap-6 lg:grid-cols-[1.15fr_.85fr]">
         <div className="space-y-6">
           <Card>
-            <div className="mb-4 flex items-center justify-between"><div><p className="text-xs font-bold text-nailong-deep">MOOD</p><h2 className="mt-1 text-xl font-black text-brown">我的心情</h2></div>{mood && <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-bold text-brown">{mood.emoji} {mood.label}</span>}</div>
+            <div className="mb-4 flex items-center justify-between"><div><p className="text-xs font-bold text-nailong-deep">MOOD</p><h2 className="mt-1 text-xl font-black text-brown">我的心情</h2></div>{mood && <span className="flex items-center gap-2 rounded-full bg-amber-100 py-1 pl-1 pr-3 text-sm font-bold text-brown"><MoodIcon image={mood.image} label={mood.label} className="size-8" sizes="32px" />{mood.label}</span>}</div>
             {life.mood ? <div><div className="rounded-2xl bg-amber-50 p-4"><p className="font-bold text-brown">今天的心情：{mood?.label}</p>{life.mood.note && <p className="mt-2 text-sm leading-6 text-muted">{life.mood.note}</p>}{life.mood.tags.length > 0 && <div className="mt-3 flex flex-wrap gap-2">{life.mood.tags.map((tag) => <span key={tag} className="rounded-full bg-white px-2.5 py-1 text-xs text-muted">{tag}</span>)}</div>}</div><details className="mt-4"><summary className="cursor-pointer text-sm font-bold text-nailong-deep">编辑今天的心情</summary><div className="mt-4"><MoodSelector date={data.today} mood={life.mood} /></div></details></div> : <MoodSelector date={data.today} />}
           </Card>
 

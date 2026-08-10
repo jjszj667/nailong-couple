@@ -7,6 +7,7 @@ import { formatDate } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Flash } from "@/components/ui/flash";
 import { MediaImage } from "@/components/ui/media-image";
+import { MoodIcon } from "@/components/mood-icon";
 import { MoodSelector } from "@/components/mood-selector";
 import { SubmitButton } from "@/components/ui/submit-button";
 
@@ -36,10 +37,10 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
               const completed = data.checkins.filter((item) => item.checkin_date === date).length;
               const events = eventOnDate(date);
               const selected = data.selectedDate === date;
-              return <Link key={date} href={`/calendar?month=${data.bounds.month}&date=${date}`} className={`relative min-h-20 min-w-0 rounded-2xl border p-1.5 transition sm:min-h-24 sm:p-2 ${selected ? "border-amber-400 bg-amber-100" : date === today ? "border-amber-300 bg-amber-50" : "border-line/70 bg-white hover:bg-amber-50"}`}><span className={`flex size-6 items-center justify-center rounded-full text-xs font-bold ${date === today ? "bg-nailong text-brown" : "text-muted"}`}>{Number(date.slice(-2))}</span><div className="mt-1 flex flex-wrap items-center gap-1">{mood && <span title={moodMeta(mood.value).label} className="text-base">{moodMeta(mood.value).emoji}</span>}{events.length > 0 && <span className="size-2 rounded-full bg-rose-400" title={events[0].title} />}{completed === 2 && <span className="text-[10px] text-green-700">✓✓</span>}</div>{events[0] && <p className="mt-1 truncate text-[9px] font-semibold text-rose-600 sm:text-[10px]">{events[0].title}</p>}</Link>;
+              return <Link key={date} href={`/calendar?month=${data.bounds.month}&date=${date}`} className={`relative min-h-20 min-w-0 rounded-2xl border p-1.5 transition sm:min-h-24 sm:p-2 ${selected ? "border-amber-400 bg-amber-100" : date === today ? "border-amber-300 bg-amber-50" : "border-line/70 bg-white hover:bg-amber-50"}`}><span className={`flex size-6 items-center justify-center rounded-full text-xs font-bold ${date === today ? "bg-nailong text-brown" : "text-muted"}`}>{Number(date.slice(-2))}</span><div className="mt-1 flex flex-wrap items-center gap-1">{mood && <MoodIcon image={moodMeta(mood.value).image} label={moodMeta(mood.value).label} className="size-6" sizes="24px" />}{events.length > 0 && <span className="size-2 rounded-full bg-rose-400" title={events[0].title} />}{completed === 2 && <span className="text-[10px] text-green-700">✓✓</span>}</div>{events[0] && <p className="mt-1 truncate text-[9px] font-semibold text-rose-600 sm:text-[10px]">{events[0].title}</p>}</Link>;
             })() : <div key={`blank-${index}`} />)}
           </div>
-          <div className="mt-5 flex flex-wrap gap-4 text-xs text-muted"><span>😊 心情</span><span>● 纪念日</span><span>✓✓ 两餐完成</span></div>
+          <div className="mt-5 flex flex-wrap gap-4 text-xs text-muted"><span className="flex items-center gap-1"><MoodIcon image={moodMeta("pleasant").image} label="心情" className="size-5" sizes="20px" />心情</span><span>● 纪念日</span><span>✓✓ 两餐完成</span></div>
         </Card>
 
         <div className="space-y-5">

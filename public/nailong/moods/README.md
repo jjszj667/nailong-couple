@@ -1,12 +1,4 @@
-# 心情素材占位说明
+# 七档心情素材
 
-V2 当前统一复用 `../nailong-3d.png`，通过情绪图标、颜色和动效表达 7 档心情。
-以后可按以下文件名替换为经过确认的透明 PNG，页面数据结构无需修改：
-
-- `very-unpleasant.png`
-- `unpleasant.png`
-- `slightly-unpleasant.png`
-- `neutral.png`
-- `slightly-pleasant.png`
-- `pleasant.png`
-- `very-pleasant.png`
+七张 WebP 均以用户提供的黄色角色图片为统一原型，保持相同角色与方形构图，
+只通过眼睛、眉毛和嘴巴的变化区分七档心情。

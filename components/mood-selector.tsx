@@ -6,6 +6,7 @@ import { Check, Heart } from "lucide-react";
 import { saveMoodAction } from "@/app/actions";
 import { MOODS, MOOD_TAGS } from "@/lib/life";
 import type { Mood } from "@/types/database";
+import { MoodIcon } from "@/components/mood-icon";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { cn } from "@/lib/utils";
 
@@ -19,9 +20,8 @@ export function MoodSelector({ date, mood, returnTo = "/" }: { date: string; moo
       <input type="hidden" name="return_to" value={returnTo} />
       <div className="relative overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-amber-50 to-orange-50 px-4 py-5 text-center">
         <div className="absolute inset-x-8 bottom-4 h-12 rounded-full opacity-25 blur-2xl" style={{ backgroundColor: current.color }} />
-        <div className="relative mx-auto size-32">
-          <Image src="/nailong/nailong-3d.png" alt="奶龙心情占位形象" fill sizes="128px" className="object-contain drop-shadow-md transition-transform duration-300" />
-          <span className="absolute -right-1 top-1 flex size-11 items-center justify-center rounded-full border-4 border-white bg-white text-2xl shadow-md" aria-hidden>{current.emoji}</span>
+        <div className="relative mx-auto size-36 overflow-hidden rounded-[2rem] border-4 border-white bg-white shadow-lg">
+          <Image src={current.image} alt={`${current.label}的奶龙表情`} fill sizes="144px" className="object-cover transition-transform duration-300" priority />
         </div>
         <p className="relative mt-2 text-xl font-black text-brown">{current.label}</p>
         <p className="relative mt-1 text-xs text-muted">轻轻点一下，选出今天最接近的感觉</p>
@@ -32,7 +32,8 @@ export function MoodSelector({ date, mood, returnTo = "/" }: { date: string; moo
           <button key={item.value} type="button" onClick={() => setValue(item.value)} aria-label={item.label} aria-pressed={value === item.value}
             className={cn("flex min-h-14 flex-col items-center justify-center rounded-2xl border text-lg transition", value === item.value ? "scale-[1.04] border-amber-400 bg-amber-100 shadow-sm" : "border-transparent bg-stone-50 hover:bg-amber-50")}
           >
-            <span>{item.emoji}</span><span className="mt-0.5 hidden text-[9px] font-semibold text-muted sm:block">{item.label}</span>
+            <MoodIcon image={item.image} label={item.label} className="size-9 border border-white shadow-sm" sizes="36px" />
+            <span className="mt-0.5 hidden text-[9px] font-semibold text-muted sm:block">{item.label}</span>
           </button>
         ))}
       </div>
