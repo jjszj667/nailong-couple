@@ -1,12 +1,27 @@
 export type UserRole = "admin" | "user";
 export type CheckinType = "lunch" | "dinner";
 export type ProductStatus = "active" | "inactive" | "sold_out";
-export type ProductCategory = "food" | "date" | "gift" | "game" | "special" | "other";
+export type ProductCategory =
+  "food" | "date" | "gift" | "game" | "special" | "other";
 export type ProductType = "normal" | "mystery";
-export type OrderStatus = "pending" | "approved" | "rejected" | "pending_fulfillment" | "completed" | "cancelled";
-export type MoodValue = "very_unpleasant" | "unpleasant" | "slightly_unpleasant" | "neutral" | "slightly_pleasant" | "pleasant" | "very_pleasant";
+export type OrderStatus =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "pending_fulfillment"
+  | "completed"
+  | "cancelled";
+export type MoodValue =
+  | "very_unpleasant"
+  | "unpleasant"
+  | "slightly_unpleasant"
+  | "neutral"
+  | "slightly_pleasant"
+  | "pleasant"
+  | "very_pleasant";
 export type EventRepeatType = "none" | "yearly";
-export type WishCategory = "food" | "travel" | "gift" | "activity" | "movie" | "other";
+export type WishCategory =
+  "food" | "travel" | "gift" | "activity" | "movie" | "other";
 export type WishStatus = "active" | "completed" | "archived";
 export type MysteryOrderStatus = "preparing" | "ready" | "revealed";
 
@@ -120,6 +135,8 @@ export type RelationshipSettings = {
   id: boolean;
   title: string;
   start_date: string | null;
+  partner_a_id: string | null;
+  partner_b_id: string | null;
   updated_at: string;
   updated_by: string | null;
 };

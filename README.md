@@ -87,7 +87,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=你的-anon-key
 2. 打开 **SQL Editor → New query**。
 3. 全新数据库先运行 [`supabase/migrations/202608090001_initial_schema.sql`](supabase/migrations/202608090001_initial_schema.sql)。
 4. 然后运行 [`supabase/migrations/202608100002_life_world_v2.sql`](supabase/migrations/202608100002_life_world_v2.sql)；它包含当前正确的签到时间窗补丁和全部 V2 增量结构。
-5. 已经在使用的数据库不要重复运行初始迁移，也不需要补跑历史的 `202608100001_checkin_windows.sql`，只运行 `202608100002_life_world_v2.sql`。
+5. 最后运行 [`supabase/migrations/202608100003_relationship_partners.sql`](supabase/migrations/202608100003_relationship_partners.sql)；它会增量加入情侣双方关联、昵称读取策略和首页聚合查询。
+6. 已经运行过前两个正式迁移的数据库不要重复执行它们，也不需要补跑历史的 `202608100001_checkin_windows.sql`，本次升级只运行 `202608100003_relationship_partners.sql`。
 
 也可以使用 Supabase CLI：
 
