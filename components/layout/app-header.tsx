@@ -20,7 +20,7 @@ export function AppHeader({ profile }: { profile: Profile }) {
       <div className="page-shell flex h-16 items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5 font-extrabold tracking-tight text-brown">
           <Image src="/nailong/nailong-3d.png" alt="" width={34} height={34} className="size-9 object-contain" />
-          <span>Jj的快乐小屋</span>
+          <span>JJ的快乐小屋</span>
         </Link>
         <nav className="hidden items-center gap-1 md:flex" aria-label="桌面导航">
           {desktopItems.map(({ href, label, icon: Icon }) => (

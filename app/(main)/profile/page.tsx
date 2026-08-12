@@ -146,7 +146,7 @@ export default async function ProfilePage({
             </h1>
             <p className="mt-1 flex items-center gap-1 text-xs font-bold text-muted">
               <Heart className="size-3.5 text-rose-400" />
-              Jj 的快乐小屋成员
+              JJ的快乐小屋成员
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
               <Coin

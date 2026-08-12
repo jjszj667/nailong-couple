@@ -1,4 +1,4 @@
-# Jj的快乐小屋
+# JJ的快乐小屋
 
 [![CI](https://github.com/jjszj667/nailong-couple/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jjszj667/nailong-couple/actions/workflows/ci.yml)
 [![Dependabot](https://img.shields.io/badge/Dependabot-weekly%20updates-0366d6)](https://github.com/jjszj667/nailong-couple/network/updates)

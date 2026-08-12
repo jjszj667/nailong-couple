@@ -11,8 +11,8 @@ const notoSans = Noto_Sans_SC({
 
 export const metadata: Metadata = {
   title: {
-    default: "Jj的快乐小屋",
-    template: "%s｜Jj的快乐小屋",
+    default: "JJ的快乐小屋",
+    template: "%s｜JJ的快乐小屋",
   },
   description: "记录今天的心情、吃饭、愿望与纪念日，把两个人的小事收藏成快乐。",
 };
