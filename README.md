@@ -1,5 +1,8 @@
 # Jj的快乐小屋
 
+[![CI](https://github.com/jjszj667/nailong-couple/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jjszj667/nailong-couple/actions/workflows/ci.yml)
+[![Dependabot](https://img.shields.io/badge/Dependabot-weekly%20updates-0366d6)](https://github.com/jjszj667/nailong-couple/network/updates)
+
 一个只供两个人使用的情侣生活记录与奖励兑换小世界。两个人都可以记录吃饭、心情、每日一句、纪念日、照片、愿望与足迹；`admin` / `user` 只负责底层权限和奖励规则，不作为前台情侣身份。登录、图片、钱包、流水、生活记录、兑换、审核与权限均落在 Supabase，关键资金操作由 PostgreSQL 原子函数完成。
 
 ## 已实现功能
@@ -48,7 +51,7 @@ components/
   layout/                 用户与后台导航
   ui/                     卡片、按钮、状态等基础组件
 lib/
-  supabase/               浏览器、服务端和 Proxy 客户端
+  supabase/               浏览器与服务端 Supabase 客户端
   auth.ts                 当前用户、管理员校验
   data.ts                 只在服务端使用的数据访问层
   life-data.ts            V2 生活记录数据访问层
@@ -56,7 +59,7 @@ lib/
 supabase/migrations/      数据库、RLS、RPC、Storage 完整迁移
 types/                    领域类型
 public/nailong/           可集中替换的奶龙占位素材
-proxy.ts                  Supabase 会话刷新
+app/layout.tsx             全局布局、字体与基础元数据
 ```
 
 ## 一、准备环境
@@ -209,6 +212,22 @@ npm run build
 npm run build
 npm run start
 ```
+
+### 维护检查
+
+提交或创建 Pull Request 前，运行以下检查：
+
+```bash
+npm ci
+npm run lint
+npm run typecheck
+npm run build
+npm audit --omit=dev
+```
+
+GitHub Actions 会在 `main` 分支的 push 和 Pull Request 上自动执行 lint、类型检查与生产构建。Dependabot 每周检查 npm 依赖和 GitHub Actions 版本更新；依赖类更新会标记为 `dependencies`，CI 类更新会标记为 `ci`。
+
+本 README 使用 UTF-8 编码。若在 Windows PowerShell 中看到中文乱码，请使用 `Get-Content README.md -Encoding utf8` 读取，不要直接按系统默认编码重存文件。
 
 ## 五、部署到 Vercel
 
