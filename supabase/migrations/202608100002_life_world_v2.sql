@@ -46,7 +46,7 @@ as $$
 declare
   v_local_time time := (now() at time zone 'Asia/Shanghai')::time;
 begin
-  if new.type = 'lunch' and not (v_local_time >= time '11:00' and v_local_time < time '13:00') then
+  if new.type = 'lunch' and not (v_local_time >= time '11:00' and v_local_time < time '14:00') then
     raise exception 'CHECKIN_WINDOW_CLOSED_LUNCH';
   end if;
   if new.type = 'dinner' and not (v_local_time >= time '16:00' and v_local_time < time '22:00') then
@@ -63,7 +63,7 @@ for each row execute function public.enforce_checkin_window();
 revoke all on function public.enforce_checkin_window() from public, anon, authenticated;
 
 update public.system_settings
-set label = '午间限时签到奖励', description = '每天 11:00–13:00 完成照片签到后发放'
+set label = '午间限时签到奖励', description = '每天 11:00–14:00 完成照片签到后发放'
 where key = 'lunch_reward';
 update public.system_settings
 set label = '晚间限时签到奖励', description = '每天 16:00–22:00 完成照片签到后发放'

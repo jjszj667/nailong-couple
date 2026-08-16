@@ -6,6 +6,8 @@ type CompressionConfig = {
   targetBytes: number;
 };
 
+const maxUploadBytes = 5 * 1024 * 1024;
+
 export const IMAGE_COMPRESSION_CONFIG: Record<ImagePurpose, CompressionConfig> = {
   checkin: { maxDimension: 1600, quality: 0.78, targetBytes: 500 * 1024 },
   memory: { maxDimension: 1920, quality: 0.82, targetBytes: 800 * 1024 },
@@ -22,9 +24,50 @@ export type CompressedImage = {
 };
 
 const supportedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+const supportedExtensions = new Set(["jpg", "jpeg", "png", "webp"]);
+const heicTypes = new Set(["image/heic", "image/heif", "image/heic-sequence", "image/heif-sequence"]);
+const heicExtensions = new Set(["heic", "heif", "heics", "heifs"]);
 
 function blobFromCanvas(canvas: HTMLCanvasElement, type: string, quality: number) {
   return new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, type, quality));
+}
+
+function extensionFromName(fileName: string) {
+  return fileName.split(".").pop()?.toLowerCase() ?? "";
+}
+
+function isHeicImage(file: File) {
+  return heicTypes.has(file.type.toLowerCase()) || heicExtensions.has(extensionFromName(file.name));
+}
+
+function isSupportedImage(file: File) {
+  return supportedTypes.has(file.type.toLowerCase()) || supportedExtensions.has(extensionFromName(file.name));
+}
+
+async function convertHeicToJpeg(source: File) {
+  try {
+    const { default: heic2any } = await import("heic2any");
+    const converted = await heic2any({
+      blob: source,
+      toType: "image/jpeg",
+      quality: 0.92,
+    });
+    const blob = Array.isArray(converted) ? converted[0] : converted;
+    if (!blob) throw new Error("empty conversion result");
+    const baseName = source.name.replace(/\.[^.]+$/, "") || "image";
+    return new File([blob], `${baseName}.jpg`, {
+      type: "image/jpeg",
+      lastModified: source.lastModified || Date.now(),
+    });
+  } catch {
+    throw new Error("HEIC/HEIF 照片转换失败，请在 iPhone 相册里另存或发送为兼容格式后重试。");
+  }
+}
+
+async function normalizeSourceImage(source: File) {
+  if (isHeicImage(source)) return convertHeicToJpeg(source);
+  if (isSupportedImage(source)) return source;
+  throw new Error("只支持 JPG、PNG、WebP 或 iPhone HEIC/HEIF 照片。");
 }
 
 async function decodeImage(file: File) {
@@ -36,7 +79,7 @@ async function decodeImage(file: File) {
     await image.decode();
     return image;
   } catch {
-    throw new Error("这张图片无法读取，请换一张 JPG、PNG 或 WebP 图片。");
+    throw new Error("这张图片无法读取，请换一张 JPG、PNG、WebP 或 iPhone HEIC/HEIF 照片。");
   } finally {
     // The decoded image keeps its bitmap even after the object URL is released.
     URL.revokeObjectURL(url);
@@ -47,12 +90,9 @@ export async function compressImage(
   source: File,
   purpose: ImagePurpose,
 ): Promise<CompressedImage> {
-  if (!supportedTypes.has(source.type)) {
-    throw new Error("只支持 JPG、PNG 或 WebP 图片；暂不支持 HEIC 原图。");
-  }
-
+  const normalized = await normalizeSourceImage(source);
   const config = IMAGE_COMPRESSION_CONFIG[purpose];
-  const image = await decodeImage(source);
+  const image = await decodeImage(normalized);
   const longest = Math.max(image.naturalWidth, image.naturalHeight);
   const initialScale = Math.min(1, config.maxDimension / longest);
   let width = Math.max(1, Math.round(image.naturalWidth * initialScale));
@@ -88,8 +128,11 @@ export async function compressImage(
   }
 
   if (!result) throw new Error("图片压缩失败，请换一张图片重试。");
+  if (result.size > maxUploadBytes) {
+    throw new Error("图片不能超过 5MB。");
+  }
   const extension = outputType === "image/webp" ? "webp" : "jpg";
-  const baseName = source.name.replace(/\.[^.]+$/, "") || "image";
+  const baseName = normalized.name.replace(/\.[^.]+$/, "") || "image";
   return {
     file: new File([result], `${baseName}.${extension}`, {
       type: outputType,

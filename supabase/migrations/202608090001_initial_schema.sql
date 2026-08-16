@@ -325,7 +325,7 @@ declare
   v_complete boolean;
 begin
   if v_user is null then raise exception 'AUTH_REQUIRED'; end if;
-  if p_type = 'lunch' and not (v_local_time >= time '11:00' and v_local_time < time '13:00') then
+  if p_type = 'lunch' and not (v_local_time >= time '11:00' and v_local_time < time '14:00') then
     raise exception 'CHECKIN_WINDOW_CLOSED_LUNCH';
   end if;
   if p_type = 'dinner' and not (v_local_time >= time '16:00' and v_local_time < time '22:00') then
@@ -619,7 +619,7 @@ grant execute on function public.admin_adjust_wallet(uuid, integer, text, text) 
 grant execute on function public.admin_update_settings(jsonb) to authenticated;
 
 insert into public.system_settings (key, value, label, description) values
-  ('lunch_reward', 5, '午间限时签到奖励', '每天 11:00–13:00 完成照片签到后发放'),
+  ('lunch_reward', 5, '午间限时签到奖励', '每天 11:00–14:00 完成照片签到后发放'),
   ('dinner_reward', 5, '晚间限时签到奖励', '每天 16:00–22:00 完成照片签到后发放'),
   ('daily_complete_reward', 5, '完整签到奖励', '同一天午间和晚间限时签到都完成后发放'),
   ('streak_7_reward', 20, '连续 7 天奖励', '连续 7 个完整签到日后发放'),

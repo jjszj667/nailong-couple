@@ -5,9 +5,9 @@ const CHECKIN_WINDOWS = {
   lunch: {
     label: "午间限时签到",
     shortLabel: "午间签到",
-    timeLabel: "每天 11:00–13:00",
+    timeLabel: "每天 11:00–14:00",
     startMinutes: 11 * 60,
-    endMinutes: 13 * 60,
+    endMinutes: 14 * 60,
   },
   dinner: {
     label: "晚间限时签到",
@@ -38,4 +38,3 @@ export function getCheckinWindow(type: CheckinType, date = new Date()) {
     isOpen: minutes >= window.startMinutes && minutes < window.endMinutes,
   };
 }
-

@@ -48,7 +48,7 @@ export function MultiImagePicker() {
         <span className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-2xl bg-amber-50 text-center text-muted">
           <ImagePlus className="size-9 text-nailong-deep" />
           <span className="font-bold text-brown">选择 1～9 张生活照片</span>
-          <span className="text-xs">JPG / PNG / WebP，选择后逐张自动压缩</span>
+          <span className="text-xs">JPG / PNG / WebP / HEIC，选择后逐张自动转换压缩</span>
         </span>
       )}
       {status && <span className="mt-3 flex items-center justify-center gap-2 text-xs font-bold text-nailong-deep"><LoaderCircle className="size-4 animate-spin" />{status}</span>}
@@ -57,7 +57,7 @@ export function MultiImagePicker() {
         ref={inputRef}
         name="images"
         type="file"
-        accept="image/jpeg,image/png,image/webp"
+        accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
         multiple
         required
         className="sr-only"

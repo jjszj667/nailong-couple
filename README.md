@@ -6,7 +6,7 @@
 
 - Supabase Auth 邮箱密码登录，不开放公开注册
 - `admin` / `user` 两种角色，页面、Server Action、RLS 三层权限校验
-- 午间 11:00–13:00、晚间 16:00–22:00 限时照片签到；同一用户、日期、时段只能成功一次
+- 午间 11:00–14:00、晚间 16:00–22:00 限时照片签到；同一用户、日期、时段只能成功一次
 - 默认午间 +5、晚间 +5、完整两次 +5、连续 7 天 +20、连续 30 天 +100，后台可改
 - 按 `Asia/Shanghai` 判断今天、月份和连续签到
 - 可用余额、冻结余额和完整钱包流水
@@ -138,7 +138,7 @@ npx supabase db push
 - `avatars`：公开读取；用户只能写自己 UUID 文件夹
 - `life-images`：仅登录后的两人可读取；用户写自己的 UUID 文件夹，管理员可管理
 
-四个 bucket 均限制为 JPG/JPEG、PNG、WebP，最大 5MB。无需在 Dashboard 手动重复创建。
+四个 bucket 均限制为 JPG/JPEG、PNG、WebP，最大 5MB。iPhone HEIC/HEIF 会先在浏览器端转换为兼容格式，再走同一套压缩和上传校验；Storage bucket 的 MIME 类型、大小限制与读写策略不需要放开。无需在 Dashboard 手动重复创建。
 
 ## 三、Auth 与两个账号
 
@@ -262,7 +262,7 @@ npm run start
 
 ### 上传图片失败
 
-确认格式为 JPG/JPEG、PNG 或 WebP，并确认 migration 已创建 Storage bucket 与策略。浏览器会先自动缩放并压缩为 WebP（不支持时回退 JPEG）；HEIC 暂不伪装支持，请先在手机相册中转成兼容格式。
+确认格式为 JPG/JPEG、PNG、WebP 或 iPhone HEIC/HEIF，并确认 migration 已创建 Storage bucket 与策略。浏览器会先把 HEIC/HEIF 转为 JPEG，再自动缩放并压缩为 WebP（不支持时回退 JPEG）；最终提交到 Supabase Storage 的仍是 JPG/JPEG、PNG 或 WebP，且不能超过 5MB。
 
 ### 数据与照片备份
 
@@ -289,6 +289,6 @@ npm run start
 - 足迹第一版保存可选经纬度，但不接第三方地图 API。
 - 奶龙日报实时聚合，不生成图片文件；结构已为以后导出卡片预留。
 - 惊喜揭晓图片字段已预留，当前后台先支持文字惊喜与留言。
-- JPG、PNG、WebP 已在客户端按用途自动压缩；HEIC 暂不支持，且不会引入体积很大的解码依赖。
+- JPG、PNG、WebP 已在客户端按用途自动压缩；iPhone HEIC/HEIF 会按需动态加载转换器，转成兼容格式后复用同一套压缩和 5MB 校验。
 - 没有找回密码页面；两人站点可先由 Supabase Dashboard 管理账号。
 - 最新 migration 执行后才能进行真实的双账号 RLS、生活照片和跨账号端到端验收。

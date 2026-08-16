@@ -33,7 +33,7 @@ export function ImagePicker({ name = "image", label = "选择一张照片", requ
         <span className="flex aspect-[4/3] flex-col items-center justify-center gap-3 rounded-2xl bg-amber-50 text-muted">
           <ImagePlus className="size-10 text-nailong-deep" />
           <span className="font-medium">{label}</span>
-          <span className="text-xs">JPG / PNG / WebP，选择后自动压缩</span>
+          <span className="text-xs">JPG / PNG / WebP / HEIC，选择后自动转换压缩</span>
         </span>
       )}
       {status && <span className="mt-3 flex items-center justify-center gap-2 text-xs font-bold text-nailong-deep"><LoaderCircle className="size-4 animate-spin" />{status}</span>}
@@ -42,7 +42,7 @@ export function ImagePicker({ name = "image", label = "选择一张照片", requ
         ref={inputRef}
         name={name}
         type="file"
-        accept="image/jpeg,image/png,image/webp"
+        accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
         required={required}
         className="sr-only"
         onChange={async (event) => {
@@ -54,7 +54,7 @@ export function ImagePicker({ name = "image", label = "选择一张照片", requ
           if (!file) return;
           input.value = "";
           setProcessing(true);
-          setStatus("正在优化照片…");
+          setStatus("正在转换和优化照片…");
           try {
             const compressed = await compressImage(file, purpose);
             const transfer = new DataTransfer();

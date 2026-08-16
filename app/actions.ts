@@ -49,7 +49,7 @@ function errorText(error: unknown) {
     REASON_REQUIRED: "请填写清楚调整奶龙币的原因。",
     AMOUNT_CANNOT_BE_ZERO: "调整数量不能为 0。",
     INVALID_IMAGE_PATH: "照片路径校验失败，请重新上传。",
-    CHECKIN_WINDOW_CLOSED_LUNCH: "午间签到只在每天 11:00–13:00 开放。",
+    CHECKIN_WINDOW_CLOSED_LUNCH: "午间签到只在每天 11:00–14:00 开放。",
     CHECKIN_WINDOW_CLOSED_DINNER: "晚间签到只在每天 16:00–22:00 开放。",
     INVALID_MOOD_DATE: "不能记录未来的心情。",
     MOOD_NOTE_TOO_LONG: "心情备注不能超过 500 个字。",

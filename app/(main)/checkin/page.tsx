@@ -20,7 +20,7 @@ export default async function CheckinPage({ searchParams }: { searchParams: Prom
 
   return (
     <main className="page-shell py-7 sm:py-10">
-      <div className="mb-7"><p className="text-xs font-bold uppercase tracking-wider text-nailong-deep">Daily check-in</p><h1 className="mt-1 text-3xl font-black tracking-tight text-brown">每天限时签到</h1><p className="mt-2 text-sm leading-6 text-muted">午间 11:00–13:00、晚间 16:00–22:00 开放；两个时段都完成还有一份完整奖励。</p></div>
+      <div className="mb-7"><p className="text-xs font-bold uppercase tracking-wider text-nailong-deep">Daily check-in</p><h1 className="mt-1 text-3xl font-black tracking-tight text-brown">每天限时签到</h1><p className="mt-2 text-sm leading-6 text-muted">午间 11:00–14:00、晚间 16:00–22:00 开放；两个时段都完成还有一份完整奖励。</p></div>
       <Flash {...flash} />
 
       <section className="mb-6 grid gap-3 sm:grid-cols-3">
