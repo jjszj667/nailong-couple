@@ -86,7 +86,11 @@ export default async function DailyReportPage({
                     {type === "lunch" ? "午间签到" : "晚间签到"}
                   </p>
                   <p className="mt-1 font-black text-brown">
-                    {checkin ? "完成 ✓" : "未记录"}
+                    {checkin
+                      ? checkin.checkin_kind === "makeup"
+                        ? "补签完成 · +1"
+                        : "正常完成 ✓"
+                      : "未记录"}
                   </p>
                 </div>
               );

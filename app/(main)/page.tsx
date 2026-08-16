@@ -25,7 +25,7 @@ import { MoodIcon } from "@/components/mood-icon";
 import { MoodSelector } from "@/components/mood-selector";
 import { MoodTrend } from "@/components/mood-trend";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { getPublicImageUrl } from "@/lib/utils";
+import { formatDate, getPublicImageUrl } from "@/lib/utils";
 
 export default async function HomePage({
   searchParams,
@@ -39,7 +39,8 @@ export default async function HomePage({
   const balance = data.wallet?.available_balance ?? 0;
   const total = balance + (data.wallet?.frozen_balance ?? 0);
   const mood = life.mood ? moodMeta(life.mood.value) : null;
-  const highlightedEvent = life.nearEvents[0] ?? life.upcoming;
+  const highlightedEvent =
+    life.nearEvents[0] ?? life.upcoming ?? life.latestPastEvent;
   const extraNearEvents = Math.max(0, life.nearEvents.length - 1);
 
   return (
@@ -110,18 +111,18 @@ export default async function HomePage({
       )}
 
       <section className="mt-5 grid gap-4 lg:grid-cols-[.8fr_1.2fr]">
-        <Card className="relative overflow-hidden bg-brown text-white">
-          <CalendarDays className="absolute -bottom-4 -right-3 size-28 text-white/5" />
+        <Card className="relative overflow-hidden border-amber-200 bg-gradient-to-br from-[#fff9e5] via-[#fff2c8] to-[#fde4c7] text-brown">
+          <CalendarDays className="absolute -bottom-4 -right-3 size-28 text-brown/5" />
           {highlightedEvent?.reminderLevel === "today" && (
             <Sparkles className="absolute right-5 top-5 size-7 text-rose-200" />
           )}
-          <p className="text-xs font-bold text-nailong">OUR DAYS</p>
+          <p className="text-xs font-bold text-nailong-deep">OUR DAYS</p>
           {life.relationshipDays ? (
             <>
               <h2 className="mt-2 text-2xl font-black">
                 我们已经一起走过 {life.relationshipDays} 天啦
               </h2>
-              <p className="mt-2 text-sm text-white/65">
+              <p className="mt-2 text-sm text-brown/65">
                 {life.relationship?.title}的第 {life.relationshipDays} 天
               </p>
             </>
@@ -130,7 +131,7 @@ export default async function HomePage({
               <h2 className="mt-2 text-xl font-black">
                 我们的日子正在等一个开始日期
               </h2>
-              <p className="mt-2 text-sm text-white/65">
+              <p className="mt-2 text-sm text-brown/65">
                 先在小屋设置里写下我们的开始日期吧。
               </p>
             </>
@@ -138,32 +139,49 @@ export default async function HomePage({
           {highlightedEvent ? (
             <Link
               href={`/calendar/${highlightedEvent.occurrence}`}
-              className={`relative mt-4 flex items-center justify-between gap-3 rounded-2xl p-3 transition hover:-translate-y-0.5 ${
+              className={`relative mt-5 block rounded-[1.5rem] border p-4 transition hover:-translate-y-0.5 sm:p-5 ${
                 highlightedEvent.reminderLevel === "today"
-                  ? "bg-rose-100 text-brown"
+                  ? "border-rose-200 bg-rose-50/90"
                   : highlightedEvent.reminderLevel === "soon"
-                    ? "bg-orange-100 text-brown"
+                    ? "border-orange-200 bg-orange-50/90"
                     : highlightedEvent.reminderLevel === "week"
-                      ? "bg-amber-100 text-brown"
-                      : "bg-white/10 text-white"
+                      ? "border-amber-200 bg-amber-50/90"
+                      : "border-white/80 bg-white/70"
               }`}
             >
-              <div className="min-w-0">
-                <p className="truncate text-xs font-bold opacity-70">
-                  ❤️ {highlightedEvent.title}
-                </p>
-                <p className="mt-1 font-black">
-                  {highlightedEvent.daysAway === 0
-                    ? "就是今天 ❤️"
-                    : `还有 ${highlightedEvent.daysAway} 天`}
-                </p>
+              <div className="relative min-w-0">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-bold tracking-wide text-rose-500">
+                      ❤️ {highlightedEvent.isPast ? "最近的特别日子" : "下一个特别日子"}
+                    </p>
+                    <h3 className="mt-1 break-words text-lg font-black leading-snug text-brown sm:text-xl">
+                      {highlightedEvent.title}
+                    </h3>
+                  </div>
+                  <ArrowRight className="mt-1 size-5 shrink-0 text-nailong-deep" />
+                </div>
+                <div className="mt-4 grid gap-2 min-[390px]:grid-cols-[1fr_auto] min-[390px]:items-center">
+                  <div className="rounded-2xl bg-white/75 px-3 py-2.5">
+                    <p className="text-[11px] font-bold text-muted">纪念日日期</p>
+                    <p className="mt-0.5 text-sm font-black text-brown">
+                      {formatDate(highlightedEvent.occurrence)}
+                    </p>
+                  </div>
+                  <p className="rounded-2xl bg-brown px-4 py-3 text-center text-sm font-black text-white">
+                    {highlightedEvent.daysAway === 0
+                      ? "就是今天 ❤️"
+                      : highlightedEvent.daysAway < 0
+                        ? `已经过去 ${Math.abs(highlightedEvent.daysAway)} 天`
+                        : `还有 ${highlightedEvent.daysAway} 天`}
+                  </p>
+                </div>
                 {extraNearEvents > 0 && (
-                  <p className="mt-1 text-[11px] opacity-65">
+                  <p className="mt-3 text-xs font-semibold text-brown/60">
                     还有 {extraNearEvents} 个日子快到啦
                   </p>
                 )}
               </div>
-              <ArrowRight className="size-4 shrink-0" />
             </Link>
           ) : (
             <Link

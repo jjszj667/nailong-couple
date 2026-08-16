@@ -246,6 +246,7 @@ export default async function DayDetailPage({
                     <figcaption className="mt-1 truncate text-[11px] text-muted">
                       {profileMap.get(item.user_id)?.nickname ?? "我们"} ·{" "}
                       {item.type === "lunch" ? "午饭" : "晚饭"}
+                      {item.checkin_kind === "makeup" ? " · 补签" : ""}
                     </figcaption>
                   </figure>
                 ))}

@@ -221,6 +221,22 @@ export function upcomingEventMeta(
     reminderLevel: isReminderEvent(event)
       ? anniversaryReminderLevel(daysAway)
       : null,
+    isPast: false as const,
+  };
+}
+
+export function pastEventMeta(
+  event: CalendarEvent,
+  today = dateInShanghai(),
+) {
+  if (event.repeat_type === "yearly" || event.event_date >= today) return null;
+  return {
+    event,
+    occurrence: event.event_date,
+    daysAway: -daysBetween(event.event_date, today),
+    title: event.title,
+    reminderLevel: null,
+    isPast: true as const,
   };
 }
 
@@ -238,7 +254,8 @@ export function recentDates(days = 7, today = dateInShanghai()) {
 }
 
 export function monthBounds(month: string) {
-  const valid = /^\d{4}-\d{2}$/.test(month)
+  const match = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(month);
+  const valid = match && Number(match[1]) >= 1900 && Number(match[1]) <= 2100
     ? month
     : dateInShanghai().slice(0, 7);
   const [year, monthNumber] = valid.split("-").map(Number);

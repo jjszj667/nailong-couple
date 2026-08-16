@@ -51,6 +51,9 @@ function errorText(error: unknown) {
     INVALID_IMAGE_PATH: "照片路径校验失败，请重新上传。",
     CHECKIN_WINDOW_CLOSED_LUNCH: "午间签到只在每天 11:00–14:00 开放。",
     CHECKIN_WINDOW_CLOSED_DINNER: "晚间签到只在每天 16:00–22:00 开放。",
+    CHECKIN_NOT_STARTED_LUNCH: "午间签到还没开始，请在 11:00 后再来。",
+    CHECKIN_NOT_STARTED_DINNER: "晚间签到还没开始，请在 16:00 后再来。",
+    INVALID_CHECKIN_KIND: "签到类型不正确，请刷新后再试。",
     INVALID_MOOD_DATE: "不能记录未来的心情。",
     MOOD_NOTE_TOO_LONG: "心情备注不能超过 500 个字。",
     TOO_MANY_MOOD_TAGS: "心情标签最多选择 8 个。",
@@ -124,16 +127,18 @@ export async function submitCheckinAction(formData: FormData) {
   }
 
   let uploadedPath: string | null = null;
+  let isMakeup = false;
   try {
     const checkinType = type as CheckinType;
     const window = getCheckinWindow(checkinType);
-    if (!window.isOpen) {
+    if (window.isBeforeWindow) {
       throw new Error(
         checkinType === "lunch"
-          ? "CHECKIN_WINDOW_CLOSED_LUNCH"
-          : "CHECKIN_WINDOW_CLOSED_DINNER",
+          ? "CHECKIN_NOT_STARTED_LUNCH"
+          : "CHECKIN_NOT_STARTED_DINNER",
       );
     }
+    isMakeup = window.isMakeup;
     validateImage(file);
     const supabase = await createClient();
     const path = `${profile.id}/${storageDatePath()}/${crypto.randomUUID()}.${extensionFor(file)}`;
@@ -151,6 +156,7 @@ export async function submitCheckinAction(formData: FormData) {
       p_type: checkinType,
       p_image_url: path,
       p_request_id: requestId.data,
+      p_checkin_kind: isMakeup ? "makeup" : "normal",
     });
     if (error) throw error;
   } catch (error) {
@@ -162,7 +168,15 @@ export async function submitCheckinAction(formData: FormData) {
   }
   revalidatePath("/");
   revalidatePath("/checkin");
-  redirect(target("/checkin", "ok", "今日份好好吃饭任务完成，奶龙币到账啦！"));
+  redirect(
+    target(
+      "/checkin",
+      "ok",
+      isMakeup
+        ? "补签成功，1 枚奶龙币已经到账啦！"
+        : "今日份好好吃饭任务完成，奶龙币到账啦！",
+    ),
+  );
 }
 
 export async function redeemAction(formData: FormData) {

@@ -1,5 +1,6 @@
 export type UserRole = "admin" | "user";
 export type CheckinType = "lunch" | "dinner";
+export type CheckinKind = "normal" | "makeup";
 export type ProductStatus = "active" | "inactive" | "sold_out";
 export type ProductCategory =
   "food" | "date" | "gift" | "game" | "special" | "other";
@@ -76,6 +77,7 @@ export type Checkin = {
   checkin_date: string;
   image_url: string;
   reward_amount: number;
+  checkin_kind: CheckinKind;
   created_at: string;
 };
 

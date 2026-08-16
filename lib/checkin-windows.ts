@@ -33,8 +33,11 @@ function shanghaiMinutes(date: Date) {
 export function getCheckinWindow(type: CheckinType, date = new Date()) {
   const window = CHECKIN_WINDOWS[type];
   const minutes = shanghaiMinutes(date);
+  const isOpen = minutes >= window.startMinutes && minutes < window.endMinutes;
   return {
     ...window,
-    isOpen: minutes >= window.startMinutes && minutes < window.endMinutes,
+    isOpen,
+    isMakeup: minutes >= window.endMinutes,
+    isBeforeWindow: minutes < window.startMinutes,
   };
 }

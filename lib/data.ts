@@ -36,6 +36,7 @@ export function shanghaiToday() {
 function calculateStreak(checkins: Checkin[], today: string) {
   const counts = new Map<string, Set<string>>();
   for (const item of checkins) {
+    if (item.checkin_kind === "makeup") continue;
     const set = counts.get(item.checkin_date) ?? new Set<string>();
     set.add(item.type);
     counts.set(item.checkin_date, set);
@@ -153,6 +154,9 @@ export async function getUserOverview() {
   const checkins = (checkinsRes.data ?? []) as Checkin[];
   const todayItems = checkins.filter((item) => item.checkin_date === today);
   const monthItems = checkins.filter((item) => item.checkin_date >= monthStart);
+  const normalMonthItems = monthItems.filter(
+    (item) => item.checkin_kind !== "makeup",
+  );
   const todayIncome = ((todayTransactionsRes.data ?? []) as WalletTransaction[])
     .filter((item) => item.direction === "income")
     .reduce((sum, item) => sum + item.amount, 0);
@@ -163,15 +167,16 @@ export async function getUserOverview() {
     today,
     lunchDone: todayItems.some((item) => item.type === "lunch"),
     dinnerDone: todayItems.some((item) => item.type === "dinner"),
+    todayCheckins: todayItems,
     todayIncome,
     streak: calculateStreak(checkins, today),
     monthCompleteDays: new Set(
-      monthItems
+      normalMonthItems
         .map((item) => item.checkin_date)
         .filter(
           (date) =>
-            monthItems.filter((item) => item.checkin_date === date).length ===
-            2,
+            normalMonthItems.filter((item) => item.checkin_date === date)
+              .length === 2,
         ),
     ).size,
     products: (productsRes.data ?? []) as Product[],
@@ -543,12 +548,15 @@ export async function getAdminDashboard() {
     streak: calculateStreak(userCheckins, today),
     monthCompleteDays: new Set(
       userCheckins
+        .filter((item) => item.checkin_kind !== "makeup")
         .filter((item) => item.checkin_date.startsWith(monthPrefix))
         .map((item) => item.checkin_date)
         .filter(
           (date) =>
-            userCheckins.filter((item) => item.checkin_date === date).length ===
-            2,
+            userCheckins.filter(
+              (item) =>
+                item.checkin_date === date && item.checkin_kind !== "makeup",
+            ).length === 2,
         ),
     ).size,
     lunchCount: userCheckins.filter((item) => item.type === "lunch").length,

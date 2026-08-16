@@ -1,7 +1,6 @@
 import Link from "next/link";
 import {
   CalendarHeart,
-  ChevronLeft,
   ChevronRight,
   Coins,
   NotebookPen,
@@ -30,6 +29,7 @@ import { MoodIcon } from "@/components/mood-icon";
 import { MoodSelector } from "@/components/mood-selector";
 import { MoodTrend } from "@/components/mood-trend";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { CalendarToolbar } from "@/components/calendar-toolbar";
 
 export const metadata = { title: "我们的日历" };
 
@@ -129,25 +129,14 @@ export default async function CalendarPage({
       </div>
       <div className="grid gap-6 xl:grid-cols-[1.15fr_.85fr]">
         <Card className="min-w-0 overflow-hidden p-3 sm:p-6">
-          <div className="mb-5 flex items-center justify-between">
-            <Link
-              href={`/calendar?month=${data.bounds.previous}`}
-              className="flex size-11 items-center justify-center rounded-full bg-amber-50 text-brown"
-              aria-label="上个月"
-            >
-              <ChevronLeft className="size-5" />
-            </Link>
-            <h2 className="text-xl font-black text-brown">
-              {data.bounds.year} 年 {data.bounds.monthNumber} 月
-            </h2>
-            <Link
-              href={`/calendar?month=${data.bounds.next}`}
-              className="flex size-11 items-center justify-center rounded-full bg-amber-50 text-brown"
-              aria-label="下个月"
-            >
-              <ChevronRight className="size-5" />
-            </Link>
-          </div>
+          <CalendarToolbar
+            year={data.bounds.year}
+            month={data.bounds.monthNumber}
+            previousMonth={data.bounds.previous}
+            nextMonth={data.bounds.next}
+            today={today}
+            defaultEventDate={data.selectedDate ?? today}
+          />
           <div className="grid grid-cols-7 text-center text-[11px] font-bold text-muted">
             {"日一二三四五六".split("").map((day) => (
               <div key={day} className="py-2">
@@ -270,7 +259,11 @@ export default async function CalendarPage({
                           </span>
                         </div>
                         <p className="mt-1 text-xs text-muted">
-                          {item ? "已完成 ✓" : "未记录"}
+                          {item
+                            ? item.checkin_kind === "makeup"
+                              ? "已补签 · +1"
+                              : "正常签到 ✓"
+                            : "未记录"}
                         </p>
                       </div>
                     );

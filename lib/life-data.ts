@@ -13,6 +13,7 @@ import {
   relationshipDays,
   resolvePartnerProfile,
   upcomingEventMeta,
+  pastEventMeta,
 } from "@/lib/life";
 import type {
   AchievementDefinition,
@@ -195,6 +196,12 @@ export async function getHomeLifeData() {
       Boolean(item),
     )
     .sort((a, b) => a.occurrence.localeCompare(b.occurrence));
+  const latestPastEvent = events
+    .map((event) => pastEventMeta(event, today))
+    .filter((item): item is NonNullable<ReturnType<typeof pastEventMeta>> =>
+      Boolean(item),
+    )
+    .sort((a, b) => b.occurrence.localeCompare(a.occurrence))[0] ?? null;
   const relationship = relationshipRes.data as RelationshipSettings | null;
   const profiles = (profilesRes.data ?? []) as Profile[];
   const partner = resolvePartnerProfile(profile, profiles, relationship);
@@ -214,6 +221,7 @@ export async function getHomeLifeData() {
     recentMoods,
     trendDates: recentDates(7, today),
     upcoming: allUpcomingEvents[0] ?? null,
+    latestPastEvent,
     nearEvents,
     wishes: (wishesRes.data ?? []) as Wish[],
     activities: [
@@ -286,6 +294,12 @@ export async function getHomePageData() {
       Boolean(item),
     )
     .sort((a, b) => a.occurrence.localeCompare(b.occurrence));
+  const latestPastEvent = events
+    .map((event) => pastEventMeta(event, today))
+    .filter((item): item is NonNullable<ReturnType<typeof pastEventMeta>> =>
+      Boolean(item),
+    )
+    .sort((a, b) => b.occurrence.localeCompare(a.occurrence))[0] ?? null;
   const recentEvents = [...events]
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
     .slice(0, 5);
@@ -385,6 +399,7 @@ export async function getHomePageData() {
       recentMoods: moods,
       trendDates: recentDates(7, today),
       upcoming: allUpcomingEvents[0] ?? null,
+      latestPastEvent,
       nearEvents: allUpcomingEvents.filter((item) =>
         Boolean(item.reminderLevel),
       ),
@@ -792,7 +807,7 @@ export async function getAchievementsData(userId?: string) {
       .eq("user_id", targetId),
     supabase
       .from("checkins")
-      .select("checkin_date,type")
+      .select("checkin_date,type,checkin_kind")
       .eq("user_id", targetId)
       .order("checkin_date", { ascending: false })
       .limit(800),
@@ -818,14 +833,17 @@ export async function getAchievementsData(userId?: string) {
   ]);
   const checkins = (checkinsRes.data ?? []) as Pick<
     Checkin,
-    "checkin_date" | "type"
+    "checkin_date" | "type" | "checkin_kind"
   >[];
   const completeDates = new Set<string>();
   for (const item of checkins) {
+    if (item.checkin_kind === "makeup") continue;
     if (
       checkins.some(
         (other) =>
-          other.checkin_date === item.checkin_date && other.type !== item.type,
+          other.checkin_date === item.checkin_date &&
+          other.type !== item.type &&
+          other.checkin_kind !== "makeup",
       )
     )
       completeDates.add(item.checkin_date);
