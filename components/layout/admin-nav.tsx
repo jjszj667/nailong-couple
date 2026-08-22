@@ -3,10 +3,10 @@ import { ArrowLeft, Boxes, CalendarHeart, ClipboardCheck, Coins, Database, Footp
 
 const items = [
   ["/admin", "概览", LayoutDashboard],
-  ["/admin/products", "商品", Boxes],
+  ["/admin/products", "商品管理", Boxes],
   ["/admin/orders", "订单", ClipboardCheck],
   ["/admin/wallet", "奶龙币", Coins],
-  ["/admin/checkins", "签到", Utensils],
+  ["/admin/checkins", "她的签到", Utensils],
   ["/admin/moods", "心情", SmilePlus],
   ["/admin/wishes", "愿望", Heart],
   ["/admin/calendar", "纪念日", CalendarHeart],

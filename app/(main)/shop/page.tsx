@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowRight, Gift, ShoppingBag } from "lucide-react";
 import { getShopData } from "@/lib/data";
+import { requireUser } from "@/lib/auth";
 import { getPublicImageUrl } from "@/lib/utils";
 import { Coin } from "@/components/ui/coin";
 import { Card } from "@/components/ui/card";
@@ -16,6 +18,8 @@ export default async function ShopPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
+  const { profile } = await requireUser();
+  if (profile.role === "admin") redirect("/admin/products");
   const [data, flash] = await Promise.all([getShopData(), searchParams]);
   const balance = data.wallet?.available_balance ?? 0;
   return (

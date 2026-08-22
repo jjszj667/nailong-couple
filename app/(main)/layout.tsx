@@ -8,7 +8,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
     <div className="min-h-screen pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:pb-10">
       <AppHeader profile={profile} />
       {children}
-      <MobileNav />
+      <MobileNav profile={profile} />
     </div>
   );
 }

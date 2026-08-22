@@ -2,7 +2,7 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin, requireUser } from "@/lib/auth";
-import { getUserOverview } from "@/lib/data";
+import { getAdminPartnerCheckinData, getUserOverview } from "@/lib/data";
 import {
   addDays,
   dateInShanghai,
@@ -97,7 +97,9 @@ async function signedLifeImages<T extends { image_url: string | null }>(
   }));
 }
 
-async function signedCheckins(items: Checkin[]) {
+async function signedCheckins(
+  items: Checkin[],
+): Promise<Array<Checkin & { signed_url: string | null }>> {
   if (!items.length) return [];
   const supabase = await createClient();
   const { data } = await supabase.storage
@@ -251,9 +253,10 @@ export async function getHomePageData() {
     supabase.rpc("get_couple_home_extras"),
   ]);
   if (error || !data) {
-    const [overview, life] = await Promise.all([
+    const [overview, life, adminCheckinData] = await Promise.all([
       getUserOverview(),
       getHomeLifeData(),
+      profile.role === "admin" ? getAdminPartnerCheckinData() : null,
     ]);
     const anniversaryMode =
       life.nearEvents.find((item) => item.daysAway === 0) ?? null;
@@ -273,7 +276,7 @@ export async function getHomePageData() {
         ),
         coupleMoods: life.mood ? [life.mood] : [],
         coupleNotes: life.note ? [life.note] : [],
-        coupleCheckins: [],
+        coupleCheckins: adminCheckinData?.todayCheckins ?? [],
         randomMemory: null,
       },
     };
@@ -310,7 +313,9 @@ export async function getHomePageData() {
     extras.couple_moods ?? moods.filter((item) => item.mood_date === today);
   const coupleNotes =
     extras.couple_notes ?? (payload.daily_note ? [payload.daily_note] : []);
-  const coupleCheckins = extras.couple_checkins ?? payload.checkins ?? [];
+  const coupleCheckins = await signedCheckins(
+    extras.couple_checkins ?? payload.checkins ?? [],
+  );
   const availableBalance = payload.wallet?.available_balance ?? 0;
   const goalProducts = [
     ...(extras.goal_products ?? payload.products ?? []),

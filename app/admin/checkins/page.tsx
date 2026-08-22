@@ -1,18 +1,21 @@
 import { Camera } from "lucide-react";
-import { getAdminCheckins } from "@/lib/data";
+import { getAdminPartnerCheckinData } from "@/lib/data";
 import { formatDate } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { MediaImage } from "@/components/ui/media-image";
 import { StatusBadge } from "@/components/ui/status-badge";
 
 export default async function AdminCheckinsPage() {
-  const checkins = await getAdminCheckins();
+  const data = await getAdminPartnerCheckinData();
+  const checkins = data.recentCheckins;
   return (
     <div>
       <div className="mb-5">
-        <h2 className="text-xl font-black text-brown">签到记录</h2>
+        <h2 className="text-xl font-black text-brown">
+          {data.partner ? `${data.partner.nickname}的签到记录` : "她的签到记录"}
+        </h2>
         <p className="mt-1 text-sm text-muted">
-          按北京时间展示最近 200 条午间、晚间正常签到和补签记录。
+          按北京时间展示她最近的午间、晚间正常签到和补签记录。
         </p>
       </div>
       {checkins.length ? (

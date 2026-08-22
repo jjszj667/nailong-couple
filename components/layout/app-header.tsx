@@ -1,20 +1,28 @@
 import Image from "next/image";
 import Link from "next/link";
-import { CalendarDays, Camera, Home, ShieldCheck, ShoppingBag } from "lucide-react";
+import { Boxes, CalendarDays, Camera, Home, ShieldCheck, ShoppingBag } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { Profile } from "@/types/database";
 import { MediaImage } from "@/components/ui/media-image";
 import { getPublicImageUrl } from "@/lib/utils";
 
-const desktopItems: { href: string; label: string; icon: LucideIcon }[] = [
+const userDesktopItems: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/", label: "首页", icon: Home },
   { href: "/checkin", label: "签到", icon: Camera },
   { href: "/shop", label: "商店", icon: ShoppingBag },
   { href: "/calendar", label: "日历", icon: CalendarDays },
 ];
 
+const adminDesktopItems: { href: string; label: string; icon: LucideIcon }[] = [
+  { href: "/", label: "首页", icon: Home },
+  { href: "/checkin", label: "她的签到", icon: Camera },
+  { href: "/admin/products", label: "商品管理", icon: Boxes },
+  { href: "/calendar", label: "日历", icon: CalendarDays },
+];
+
 export function AppHeader({ profile }: { profile: Profile }) {
   const avatar = getPublicImageUrl("avatars", profile.avatar_url);
+  const desktopItems = profile.role === "admin" ? adminDesktopItems : userDesktopItems;
   return (
     <header className="sticky top-0 z-40 border-b border-line/70 bg-cream/85 backdrop-blur-xl">
       <div className="page-shell flex h-16 items-center justify-between">

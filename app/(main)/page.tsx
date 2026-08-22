@@ -42,6 +42,33 @@ export default async function HomePage({
   const highlightedEvent =
     life.nearEvents[0] ?? life.upcoming ?? life.latestPastEvent;
   const extraNearEvents = Math.max(0, life.nearEvents.length - 1);
+  const isAdmin = data.profile.role === "admin";
+  const partnerTodayCheckins = life.partner
+    ? life.coupleCheckins.filter(
+        (item) => item.user_id === life.partner?.id,
+      )
+    : [];
+  const partnerLunch = partnerTodayCheckins.find(
+    (item) => item.type === "lunch",
+  );
+  const partnerDinner = partnerTodayCheckins.find(
+    (item) => item.type === "dinner",
+  );
+  const todayMeals = [
+    {
+      label: "午间",
+      done: isAdmin ? Boolean(partnerLunch) : data.lunchDone,
+      icon: Utensils,
+      checkin: isAdmin ? partnerLunch : null,
+    },
+    {
+      label: "晚间",
+      done: isAdmin ? Boolean(partnerDinner) : data.dinnerDone,
+      icon: Clock3,
+      checkin: isAdmin ? partnerDinner : null,
+    },
+  ];
+  const partnerCompletedMeals = todayMeals.filter((item) => item.done).length;
 
   return (
     <main className="page-shell py-5 sm:py-9">
@@ -64,7 +91,9 @@ export default async function HomePage({
             <h1 className="mt-2 max-w-xl text-2xl font-black leading-tight tracking-tight text-brown sm:text-4xl">
               {life.anniversaryMode
                 ? `❤️ 今天是${life.anniversaryMode.title}`
-                : "奶龙提醒你：今天有好好吃饭吗？"}
+                : isAdmin
+                  ? `今天也看看${life.partner?.nickname ?? "她"}有没有好好吃饭`
+                  : "奶龙提醒你：今天有好好吃饭吗？"}
             </h1>
             {life.anniversaryMode && (
               <p className="mt-2 text-sm font-bold text-brown/65">
@@ -75,10 +104,14 @@ export default async function HomePage({
             )}
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <span className="rounded-full bg-white/55 px-4 py-2 text-sm font-bold text-brown">
-                当前奶龙币 <strong className="ml-1 text-lg">{total}</strong>
+                {isAdmin ? (
+                  <>她今日已签 <strong className="ml-1 text-lg">{partnerCompletedMeals} / 2</strong></>
+                ) : (
+                  <>当前奶龙币 <strong className="ml-1 text-lg">{total}</strong></>
+                )}
               </span>
               <Link href="/checkin" className="pill-button bg-white">
-                去签到 <Camera className="size-4" />
+                {isAdmin ? "查看她的签到" : "去签到"} <Camera className="size-4" />
               </Link>
             </div>
           </div>
@@ -196,27 +229,28 @@ export default async function HomePage({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-bold text-nailong-deep">TODAY</p>
-              <h2 className="mt-1 text-xl font-black text-brown">今日签到</h2>
+              <h2 className="mt-1 text-xl font-black text-brown">
+                {isAdmin ? `${life.partner?.nickname ?? "她"}今天的签到` : "今日签到"}
+              </h2>
             </div>
             <Link href="/checkin" className="text-sm font-bold text-muted">
-              去签到
+              {isAdmin ? "查看照片" : "去签到"}
             </Link>
           </div>
-          {!data.lunchDone && !data.dinnerDone && (
+          {todayMeals.every((item) => !item.done) && (
             <div className="mt-4 rounded-2xl bg-amber-50 p-4">
-              <p className="font-black text-brown">今天还没有签到</p>
-              <p className="mt-1 text-sm text-muted">吃完饭记得来留张照片。</p>
+              <p className="font-black text-brown">
+                {isAdmin ? "她今天还没有签到" : "今天还没有签到"}
+              </p>
+              <p className="mt-1 text-sm text-muted">
+                {isAdmin ? "等她留下今天的吃饭照片。" : "吃完饭记得来留张照片。"}
+              </p>
             </div>
           )}
           <div className="mt-4 grid grid-cols-2 gap-3">
-            {[
-              ["午间", data.lunchDone, Utensils],
-              ["晚间", data.dinnerDone, Clock3],
-            ].map(([label, done, Icon]) => {
-              const MealIcon = Icon as typeof Utensils;
-              return (
+            {todayMeals.map(({ label, done, icon: MealIcon, checkin }) => (
                 <div
-                  key={String(label)}
+                  key={label}
                   className={`rounded-2xl p-4 ${done ? "bg-green-50" : "bg-amber-50"}`}
                 >
                   <div className="flex items-center justify-between">
@@ -229,18 +263,33 @@ export default async function HomePage({
                       <span className="text-xs text-muted">未完成</span>
                     )}
                   </div>
+                  {isAdmin && checkin?.signed_url && (
+                    <MediaImage
+                      src={checkin.signed_url}
+                      alt={`${life.partner?.nickname ?? "她"}${label}签到照片`}
+                      className="mt-3 aspect-[4/3] w-full rounded-xl"
+                    />
+                  )}
                   <p className="mt-3 font-bold text-brown">
-                    {String(label)}签到
+                    {label}签到
                   </p>
+                  {isAdmin && checkin && (
+                    <p className="mt-1 text-xs text-muted">
+                      {checkin.checkin_kind === "makeup" ? "补签" : "正常签到"} · {formatDate(checkin.created_at, true)}
+                    </p>
+                  )}
                 </div>
-              );
-            })}
+              ))}
           </div>
-          <p className="mt-3 text-sm text-muted">
-            今日通过生活记录获得{" "}
-            <strong className="text-green-700">+{data.todayIncome}</strong>{" "}
-            奶龙币
-          </p>
+          {isAdmin ? (
+            <p className="mt-3 text-sm text-muted">今天已完成 {partnerCompletedMeals} / 2 次签到。</p>
+          ) : (
+            <p className="mt-3 text-sm text-muted">
+              今日通过生活记录获得{" "}
+              <strong className="text-green-700">+{data.todayIncome}</strong>{" "}
+              奶龙币
+            </p>
+          )}
         </Card>
       </section>
 
@@ -414,7 +463,7 @@ export default async function HomePage({
         </div>
 
         <div className="space-y-6">
-          {data.goalProduct && (
+          {!isAdmin && data.goalProduct && (
             <Card className="bg-gradient-to-br from-amber-50 to-orange-50">
               <div className="flex items-center gap-2">
                 <Target className="size-5 text-nailong-deep" />
@@ -527,7 +576,7 @@ export default async function HomePage({
             </Card>
           )}
 
-          <div>
+          {!isAdmin && <div>
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-xl font-black text-brown">推荐兑换</h2>
               <Link href="/shop" className="text-sm font-bold text-muted">
@@ -561,7 +610,7 @@ export default async function HomePage({
                 </Link>
               ))}
             </div>
-          </div>
+          </div>}
 
           {(life.activities.length > 0 || data.transactions.length > 0) && <Card>
             <div className="flex items-center gap-2">

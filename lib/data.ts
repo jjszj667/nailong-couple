@@ -196,6 +196,76 @@ export async function getCheckinPageData() {
   return { ...overview, settings: (data ?? []) as SystemSetting[] };
 }
 
+export async function getAdminPartnerCheckinData() {
+  const { profile } = await requireAdmin();
+  const supabase = await createClient();
+  const today = shanghaiToday();
+  const monthStart = `${today.slice(0, 7)}-01`;
+  const historyStart = new Date(
+    new Date(`${today}T12:00:00+08:00`).getTime() - 400 * 86_400_000,
+  )
+    .toISOString()
+    .slice(0, 10);
+  const [relationshipRes, profilesRes] = await Promise.all([
+    supabase
+      .from("relationship_settings")
+      .select("*")
+      .eq("id", true)
+      .maybeSingle(),
+    supabase.from("profiles").select("*").order("created_at"),
+  ]);
+  const profiles = (profilesRes.data ?? []) as Profile[];
+  const partner = resolvePartnerProfile(
+    profile,
+    profiles,
+    relationshipRes.data as RelationshipSettings | null,
+  );
+
+  if (!partner) {
+    return {
+      partner: null,
+      today,
+      todayCheckins: [],
+      recentCheckins: [],
+      streak: 0,
+      monthCompleteDays: 0,
+    };
+  }
+
+  const { data } = await supabase
+    .from("checkins")
+    .select("*")
+    .eq("user_id", partner.id)
+    .gte("checkin_date", historyStart)
+    .order("checkin_date", { ascending: false })
+    .order("created_at", { ascending: false });
+  const checkins = (data ?? []) as Checkin[];
+  const normalMonthItems = checkins.filter(
+    (item) =>
+      item.checkin_date >= monthStart && item.checkin_kind !== "makeup",
+  );
+  const recentCheckins = await signCheckinImages(checkins.slice(0, 30));
+
+  return {
+    partner,
+    today,
+    todayCheckins: recentCheckins.filter(
+      (item) => item.checkin_date === today,
+    ),
+    recentCheckins,
+    streak: calculateStreak(checkins, today),
+    monthCompleteDays: new Set(
+      normalMonthItems
+        .map((item) => item.checkin_date)
+        .filter(
+          (date) =>
+            normalMonthItems.filter((item) => item.checkin_date === date)
+              .length === 2,
+        ),
+    ).size,
+  };
+}
+
 export async function getShopData() {
   const { profile } = await requireUser();
   const supabase = await createClient();
@@ -656,17 +726,6 @@ export async function getAdminWalletData() {
     wallets: (walletsRes.data ?? []) as WalletBalance[],
     transactions: (transactionsRes.data ?? []) as WalletTransaction[],
   };
-}
-
-export async function getAdminCheckins() {
-  await requireAdmin();
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("checkins")
-    .select("*")
-    .order("checkin_date", { ascending: false })
-    .limit(200);
-  return signCheckinImages((data ?? []) as Checkin[]);
 }
 
 export async function getAdminAnnouncements() {

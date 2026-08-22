@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { ArrowLeft, Clock3, Gift, PackageCheck, Sparkles } from "lucide-react";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { redeemAction } from "@/app/actions";
 import { getProduct, getShopData } from "@/lib/data";
+import { requireUser } from "@/lib/auth";
 import { getPublicImageUrl } from "@/lib/utils";
 import { MediaImage } from "@/components/ui/media-image";
 import { Coin } from "@/components/ui/coin";
@@ -17,7 +18,12 @@ export default async function ProductPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string }>;
 }) {
-  const [{ id }, flash] = await Promise.all([params, searchParams]);
+  const [{ id }, flash, { profile }] = await Promise.all([
+    params,
+    searchParams,
+    requireUser(),
+  ]);
+  if (profile.role === "admin") redirect(`/admin/products/${id}`);
   const [product, shop] = await Promise.all([getProduct(id), getShopData()]);
   if (!product || product.is_hidden) notFound();
   const balance = shop.wallet?.available_balance ?? 0;

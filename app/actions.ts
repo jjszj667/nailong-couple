@@ -46,6 +46,8 @@ function errorText(error: unknown) {
     ORDER_ALREADY_PROCESSED: "这笔兑换已经处理过啦。",
     ORDER_NOT_READY: "这笔兑换还没到可以完成的状态。",
     ADMIN_REQUIRED: "只有管理员可以进行这项操作。",
+    ADMIN_CHECKIN_DISABLED: "管理员账户只能查看对方签到，不参与签到。",
+    ADMIN_REDEMPTION_DISABLED: "管理员账户请前往商品管理页面。",
     REASON_REQUIRED: "请填写清楚调整奶龙币的原因。",
     AMOUNT_CANNOT_BE_ZERO: "调整数量不能为 0。",
     INVALID_IMAGE_PATH: "照片路径校验失败，请重新上传。",
@@ -115,6 +117,9 @@ export async function logoutAction() {
 
 export async function submitCheckinAction(formData: FormData) {
   const { profile } = await requireUser();
+  if (profile.role === "admin") {
+    redirect(target("/checkin", "error", "管理员账户只能查看对方签到，不参与签到。"));
+  }
   const type = formData.get("type");
   const file = formData.get("image");
   const requestId = z.uuid().safeParse(formData.get("request_id"));
@@ -180,7 +185,8 @@ export async function submitCheckinAction(formData: FormData) {
 }
 
 export async function redeemAction(formData: FormData) {
-  await requireUser();
+  const { profile } = await requireUser();
+  if (profile.role === "admin") redirect("/admin/products");
   const id = z.uuid().safeParse(formData.get("product_id"));
   const requestId = z.uuid().safeParse(formData.get("request_id"));
   if (!id.success || !requestId.success)
