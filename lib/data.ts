@@ -7,6 +7,8 @@ import { getPublicImageUrl, SHANGHAI_TIME_ZONE } from "@/lib/utils";
 import type {
   Announcement,
   Checkin,
+  CheckinDailyResult,
+  CheckinSettlementState,
   DailyNote,
   MemoryPhoto,
   Mood,
@@ -17,6 +19,7 @@ import type {
   ProductMysteryDetails,
   Profile,
   RelationshipSettings,
+  ReleaseAnnouncement,
   SystemSetting,
   WalletBalance,
   WalletTransaction,
@@ -81,6 +84,10 @@ async function signMemoryImages(photos: MemoryPhoto[]) {
 export async function getUserOverview() {
   const { profile } = await requireUser();
   const supabase = await createClient();
+  if (profile.role !== "admin") {
+    const settlement = await supabase.rpc("settle_my_checkin_days");
+    if (settlement.error) throw new Error(`签到结算失败：${settlement.error.message}`);
+  }
   const today = shanghaiToday();
   const monthStart = `${today.slice(0, 7)}-01`;
   const historyStart = new Date(
@@ -168,6 +175,7 @@ export async function getUserOverview() {
     lunchDone: todayItems.some((item) => item.type === "lunch"),
     dinnerDone: todayItems.some((item) => item.type === "dinner"),
     todayCheckins: todayItems,
+    checkins,
     todayIncome,
     streak: calculateStreak(checkins, today),
     monthCompleteDays: new Set(
@@ -187,13 +195,20 @@ export async function getUserOverview() {
 }
 
 export async function getCheckinPageData() {
-  const overview = await getUserOverview();
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("system_settings")
-    .select("*")
-    .in("key", ["lunch_reward", "dinner_reward", "daily_complete_reward"]);
-  return { ...overview, settings: (data ?? []) as SystemSetting[] };
+  const overview = await getUserOverview();
+  const [settingsRes, daysRes, stateRes] = await Promise.all([
+    supabase.from("system_settings").select("*")
+      .in("key", ["lunch_reward", "dinner_reward", "daily_complete_reward"]),
+    supabase.from("checkin_daily_results").select("*")
+      .eq("user_id", overview.profile.id).order("checkin_date", { ascending: false }).limit(30),
+    supabase.from("checkin_settlement_state").select("*")
+      .eq("user_id", overview.profile.id).maybeSingle(),
+  ]);
+  if (daysRes.error || stateRes.error) throw new Error("无法读取签到结算记录。请稍后重试。");
+  return { ...overview, settings: (settingsRes.data ?? []) as SystemSetting[],
+    dailyResults: (daysRes.data ?? []) as CheckinDailyResult[],
+    settlementState: stateRes.data as CheckinSettlementState | null };
 }
 
 export async function getAdminPartnerCheckinData() {
@@ -228,17 +243,19 @@ export async function getAdminPartnerCheckinData() {
       todayCheckins: [],
       recentCheckins: [],
       streak: 0,
+      missedStreak: 0,
       monthCompleteDays: 0,
     };
   }
 
-  const { data } = await supabase
-    .from("checkins")
-    .select("*")
-    .eq("user_id", partner.id)
-    .gte("checkin_date", historyStart)
-    .order("checkin_date", { ascending: false })
-    .order("created_at", { ascending: false });
+  const [checkinsResult, stateResult] = await Promise.all([
+    supabase.from("checkins").select("*").eq("user_id", partner.id)
+      .gte("checkin_date", historyStart).order("checkin_date", { ascending: false })
+      .order("created_at", { ascending: false }),
+    supabase.from("checkin_settlement_state").select("consecutive_missed")
+      .eq("user_id", partner.id).maybeSingle(),
+  ]);
+  const data = checkinsResult.data;
   const checkins = (data ?? []) as Checkin[];
   const normalMonthItems = checkins.filter(
     (item) =>
@@ -254,6 +271,8 @@ export async function getAdminPartnerCheckinData() {
     ),
     recentCheckins,
     streak: calculateStreak(checkins, today),
+    missedStreak: checkins.some((item) => item.checkin_date === today && item.checkin_kind === "normal")
+      ? 0 : (stateResult.data?.consecutive_missed ?? 0),
     monthCompleteDays: new Set(
       normalMonthItems
         .map((item) => item.checkin_date)
@@ -352,6 +371,10 @@ export async function getOrder(id: string) {
 export async function getWalletData() {
   const { profile } = await requireUser();
   const supabase = await createClient();
+  if (profile.role !== "admin") {
+    const { error } = await supabase.rpc("settle_my_checkin_days");
+    if (error) throw new Error(`签到结算失败：${error.message}`);
+  }
   const [walletRes, transactionsRes, relationshipRes, profilesRes] =
     await Promise.all([
       supabase
@@ -382,6 +405,38 @@ export async function getWalletData() {
       relationship,
     ),
   };
+}
+
+export async function getLatestUnreadRelease() {
+  const { profile } = await requireUser();
+  const supabase = await createClient();
+  const { data: release, error } = await supabase.from("release_announcements")
+    .select("*").eq("status", "published").lte("published_at", new Date().toISOString())
+    .order("published_at", { ascending: false }).limit(1).maybeSingle();
+  if (error || !release) return null;
+  const { data: receipt, error: readError } = await supabase.from("release_announcement_reads")
+    .select("read_at").eq("user_id", profile.id).eq("announcement_id", release.id).maybeSingle();
+  if (readError || receipt) return null;
+  return release as ReleaseAnnouncement;
+}
+
+export async function getPublishedReleases() {
+  await requireUser();
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("release_announcements")
+    .select("*").eq("status", "published").lte("published_at", new Date().toISOString())
+    .order("published_at", { ascending: false });
+  if (error) throw new Error("更新日志暂时无法读取，请稍后重试。");
+  return (data ?? []) as ReleaseAnnouncement[];
+}
+
+export async function getAdminReleases() {
+  await requireAdmin();
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("release_announcements")
+    .select("*").order("created_at", { ascending: false });
+  if (error) throw new Error("公告列表暂时无法读取，请稍后重试。");
+  return (data ?? []) as ReleaseAnnouncement[];
 }
 
 export async function getMemoriesData(date?: string, category = "all") {

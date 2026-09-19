@@ -56,6 +56,10 @@ function errorText(error: unknown) {
     CHECKIN_NOT_STARTED_LUNCH: "午间签到还没开始，请在 11:00 后再来。",
     CHECKIN_NOT_STARTED_DINNER: "晚间签到还没开始，请在 16:00 后再来。",
     INVALID_CHECKIN_KIND: "签到类型不正确，请刷新后再试。",
+    INVALID_CHECKIN_DATE: "补签日期不正确，请选择账户创建后至今天的日期。",
+    NORMAL_CHECKIN_TODAY_ONLY: "准时签到只能登记今天。",
+    RELEASE_NOT_AVAILABLE: "这条更新公告已经停用，请刷新页面。",
+    PUBLISHED_VERSION_IMMUTABLE: "已发布版本号不能修改，请创建新版本公告。",
     INVALID_MOOD_DATE: "不能记录未来的心情。",
     MOOD_NOTE_TOO_LONG: "心情备注不能超过 500 个字。",
     TOO_MANY_MOOD_TAGS: "心情标签最多选择 8 个。",
@@ -123,27 +127,30 @@ export async function submitCheckinAction(formData: FormData) {
   const type = formData.get("type");
   const file = formData.get("image");
   const requestId = z.uuid().safeParse(formData.get("request_id"));
+  const rawDate = formData.get("checkin_date");
+  const checkinDate = z.iso.date().safeParse(rawDate || dateInShanghai());
   if (
     (type !== "lunch" && type !== "dinner") ||
     !(file instanceof File) ||
-    !requestId.success
+    !requestId.success || !checkinDate.success
   ) {
     redirect(target("/checkin", "error", "签到信息不完整，请重新选择。"));
   }
 
   let uploadedPath: string | null = null;
   let isMakeup = false;
+  let reward = 0;
   try {
     const checkinType = type as CheckinType;
     const window = getCheckinWindow(checkinType);
-    if (window.isBeforeWindow) {
+    if (checkinDate.data === dateInShanghai() && window.isBeforeWindow) {
       throw new Error(
         checkinType === "lunch"
           ? "CHECKIN_NOT_STARTED_LUNCH"
           : "CHECKIN_NOT_STARTED_DINNER",
       );
     }
-    isMakeup = window.isMakeup;
+    isMakeup = checkinDate.data < dateInShanghai() || window.isMakeup;
     validateImage(file);
     const supabase = await createClient();
     const path = `${profile.id}/${storageDatePath()}/${crypto.randomUUID()}.${extensionFor(file)}`;
@@ -157,13 +164,15 @@ export async function submitCheckinAction(formData: FormData) {
     if (uploadError) throw uploadError;
     uploadedPath = path;
 
-    const { error } = await supabase.rpc("submit_checkin", {
+    const { data, error } = await supabase.rpc("submit_checkin", {
       p_type: checkinType,
       p_image_url: path,
       p_request_id: requestId.data,
       p_checkin_kind: isMakeup ? "makeup" : "normal",
+      p_checkin_date: checkinDate.data,
     });
     if (error) throw error;
+    reward = Number((data as { meal_reward?: number } | null)?.meal_reward ?? 0);
   } catch (error) {
     if (uploadedPath) {
       const supabase = await createClient();
@@ -178,7 +187,7 @@ export async function submitCheckinAction(formData: FormData) {
       "/checkin",
       "ok",
       isMakeup
-        ? "补签成功，1 枚奶龙币已经到账啦！"
+        ? `补签成功，本次获得 ${reward} 枚奶龙币。补签不算有效签到。`
         : "今日份好好吃饭任务完成，奶龙币到账啦！",
     ),
   );
@@ -503,6 +512,56 @@ export async function toggleAnnouncementAction(formData: FormData) {
     redirect(target("/admin/announcements", "error", errorText(error)));
   revalidatePath("/");
   redirect(target("/admin/announcements", "ok", "留言状态已经更新。"));
+}
+
+export async function saveReleaseAction(formData: FormData) {
+  await requireAdmin();
+  const parsed = z.object({
+    id: z.union([z.uuid(), z.literal("")]),
+    version: z.string().trim().min(1).max(40),
+    title: z.string().trim().min(1).max(120),
+    content: z.string().trim().min(1).max(5000),
+    status: z.enum(["draft", "published", "disabled", "closed"]),
+    is_forced: z.boolean(),
+  }).safeParse({
+    id: formData.get("id") || "",
+    version: formData.get("version"),
+    title: formData.get("title"),
+    content: formData.get("content"),
+    status: formData.get("status"),
+    is_forced: formData.get("is_forced") === "on",
+  });
+  if (!parsed.success) redirect(target("/admin/releases", "error", "请检查版本号、标题和正文。"));
+  const { id, ...values } = parsed.data;
+  const supabase = await createClient();
+  const publishedAt = values.status === "published" ? new Date().toISOString() : null;
+  let error;
+  if (id) {
+    const existing = await supabase.from("release_announcements")
+      .select("published_at").eq("id", id).maybeSingle();
+    if (existing.error || !existing.data) redirect(target("/admin/releases", "error", "没有找到这条公告。"));
+    ({ error } = await supabase.from("release_announcements")
+      .update({ ...values, published_at: existing.data.published_at ?? publishedAt })
+      .eq("id", id));
+  } else {
+    ({ error } = await supabase.from("release_announcements")
+      .insert({ ...values, published_at: publishedAt }));
+  }
+  if (error) redirect(target("/admin/releases", "error", error.message.includes("duplicate key") ? "版本标识已存在。" : errorText(error)));
+  revalidatePath("/", "layout");
+  redirect(target("/admin/releases", "ok", "版本公告已保存。"));
+}
+
+export async function acknowledgeReleaseAction(id: string) {
+  await requireUser();
+  const parsed = z.uuid().safeParse(id);
+  if (!parsed.success) throw new Error("INVALID_RELEASE_ID");
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("acknowledge_release", { p_announcement_id: parsed.data });
+  if (error?.message.includes("RELEASE_NOT_AVAILABLE")) return false;
+  if (error) throw new Error(errorText(error));
+  revalidatePath("/", "layout");
+  return true;
 }
 
 export async function updateSettingsAction(formData: FormData) {

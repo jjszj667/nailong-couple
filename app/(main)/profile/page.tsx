@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Sparkles,
   Trash2,
+  ScrollText,
   UserRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -97,6 +98,12 @@ const groups: {
         hint: "等待揭晓的小惊喜",
         icon: Gift,
       },
+    ],
+  },
+  {
+    title: "关于小屋",
+    items: [
+      { href: "/releases", label: "更新日志", hint: "看看每个版本的新变化", icon: ScrollText },
     ],
   },
   {

@@ -15,6 +15,7 @@ const items = [
   ["/admin/places", "足迹", Footprints],
   ["/admin/storage", "存储", Database],
   ["/admin/announcements", "留言", Megaphone],
+  ["/admin/releases", "版本公告", Megaphone],
   ["/admin/settings", "设置", Settings],
 ] as const;
 

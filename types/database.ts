@@ -81,6 +81,34 @@ export type Checkin = {
   created_at: string;
 };
 
+export type CheckinDailyResult = {
+  user_id: string;
+  checkin_date: string;
+  status: "completed" | "missed";
+  consecutive_missed: number;
+  planned_deduction: number;
+  actual_deduction: number;
+  settled_at: string;
+};
+
+export type CheckinSettlementState = {
+  user_id: string;
+  next_date: string;
+  consecutive_missed: number;
+};
+
+export type ReleaseAnnouncement = {
+  id: string;
+  version: string;
+  title: string;
+  content: string;
+  status: "draft" | "published" | "disabled" | "closed";
+  is_forced: boolean;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Product = {
   id: string;
   name: string;
