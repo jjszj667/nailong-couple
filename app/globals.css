@@ -1,17 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fffaf0;
-  --foreground: #3f331f;
-  --cream: #fffaf0;
-  --milk: #fffdf8;
+  --background: #faf8f2;
+  --foreground: #403b30;
+  --cream: #faf8f2;
+  --milk: #ffffff;
   --yellow: #f6c84c;
-  --yellow-deep: #dc9f18;
+  --yellow-deep: #946512;
   --orange: #e78c38;
   --gold: #bd8020;
   --brown: #5b4527;
-  --muted: #83735d;
-  --line: #eadfc9;
+  --muted: #797263;
+  --line: #eae5da;
   --success: #5f8c5a;
 }
 
@@ -38,8 +38,8 @@
 body {
   min-height: 100%;
   background:
-    radial-gradient(circle at 10% 0%, rgba(246, 200, 76, 0.22), transparent 32rem),
-    radial-gradient(circle at 92% 18%, rgba(231, 140, 56, 0.12), transparent 28rem),
+    radial-gradient(circle at 8% 0%, rgba(246, 200, 76, 0.09), transparent 32rem),
+    radial-gradient(circle at 95% 30%, rgba(231, 140, 56, 0.045), transparent 28rem),
     var(--background);
   color: var(--foreground);
   font-family: var(--font-noto-sans-sc), system-ui, sans-serif;
@@ -63,15 +63,15 @@ button:not(:disabled),
 }
 
 .page-shell {
-  width: min(100% - 1.25rem, 72rem);
+  width: min(100% - 2rem, 72rem);
   margin-inline: auto;
 }
 
 .soft-card {
-  border: 1px solid rgba(234, 223, 201, 0.9);
-  border-radius: 1.75rem;
-  background: rgba(255, 253, 248, 0.92);
-  box-shadow: 0 16px 45px rgba(111, 79, 27, 0.08);
+  border: 1px solid var(--line);
+  border-radius: 1.5rem;
+  background: var(--milk);
+  box-shadow: 0 4px 24px rgba(73, 54, 23, 0.035);
 }
 
 .pill-button {
@@ -81,11 +81,11 @@ button:not(:disabled),
   justify-content: center;
   gap: 0.5rem;
   border-radius: 999px;
-  background: linear-gradient(135deg, #f8d76c, #f2b83d);
+  background: #f6ce57;
   padding: 0.7rem 1.2rem;
   color: #493617;
   font-weight: 700;
-  box-shadow: 0 8px 18px rgba(207, 145, 27, 0.2);
+  box-shadow: 0 3px 0 rgba(173, 121, 19, 0.12);
   transition: transform 160ms ease, box-shadow 160ms ease;
 }
 
@@ -144,4 +144,69 @@ main {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Shared visual rhythm: clear hierarchy, quiet surfaces, warm accents. */
+h1, h2, h3 { text-wrap: balance; }
+p { overflow-wrap: anywhere; }
+button, a, input, textarea, select { touch-action: manipulation; }
+:focus-visible { outline: 3px solid #99701d; outline-offset: 4px; }
+.field { min-height: 3rem; background: #fdfcf9; }
+textarea.field { line-height: 1.8; }
+.app-header { background: rgb(250 248 242 / 94%); }
+.desktop-nav { padding: 5px; border: 1px solid var(--line); border-radius: 999px; background: #f2efe7; }
+.desktop-nav-link { display: flex; align-items: center; gap: 7px; min-height: 38px; padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--muted); transition: background 160ms, color 160ms; }
+.desktop-nav-link:hover { color: var(--brown); background: #fff8dd; }
+.desktop-nav-link.is-active { color: var(--brown); background: #fff; box-shadow: 0 2px 6px #4936170b; }
+.mobile-nav { margin: 0 10px max(8px, env(safe-area-inset-bottom)); border: 1px solid var(--line); border-radius: 24px; padding-bottom: 8px; box-shadow: 0 6px 30px #49361712; }
+.mobile-nav a { transition: background 180ms, transform 180ms; }
+.mobile-nav a:active { transform: scale(.94); }
+.mobile-nav a[aria-current="page"] { background: #fff0b9; }
+.home-hero { border: 1px solid #eedda7; background: linear-gradient(115deg, #fff4c8, #fae3a0) !important; box-shadow: 0 8px 30px #9b71240a !important; }
+.home-hero:has(.text-rose-400) { background: linear-gradient(115deg, #fff0e7, #fce2d8) !important; }
+.home-hero h1 { max-width: 35rem; line-height: 1.4; }
+.home-hero .pill-button { background: #514632; color: #fffdf6; box-shadow: 0 4px 12px #49361712; }
+.nailong-figure { position: relative; display: block; flex-shrink: 0; aspect-ratio: 1; border: 0; padding: 0; background: transparent; }
+.nailong-art { display: block; width: 100%; height: 100%; background-image: url('/nailong/companion-atlas.png'); background-size: 200% 200%; background-repeat: no-repeat; transform-origin: 50% 90%; filter: drop-shadow(0 8px 6px #8d641411); }
+.nailong-wave { background-position: 0 0; animation: nailong-sway 3.8s ease-in-out 3; }
+.nailong-love { background-position: 100% 0; animation: nailong-cuddle 3.6s ease-in-out 3; }
+.nailong-meal { background-position: 0 100%; animation: nailong-bob 3s ease-in-out 3; }
+.nailong-sleep { background-position: 100% 100%; animation: nailong-breathe 4.5s ease-in-out 3; }
+.nailong-play { position: relative; display: flex; flex-direction: column; align-items: center; }
+.nailong-play .nailong-figure { width: 100%; border-radius: 35%; transition: transform 180ms; }
+.nailong-play .nailong-figure:hover { transform: translateY(-4px); }
+.nailong-play .nailong-figure:active { transform: scale(.96); }
+.nailong-caption { display: block; margin-top: 8px; padding: 8px 13px; max-width: 100%; border: 1px solid #ffffff80; border-radius: 999px; background: #ffffff70; color: #716039; font-size: 11px; line-height: 1.6; text-align: center; }
+.hero-companion { width: 220px; margin: 0 auto; }
+.login-companion { width: 240px; }
+.login-welcome { background: radial-gradient(ellipse at 50% 40%, #fff9dd 0%, #fae9b3 75%); }
+.login-panel { box-shadow: 0 24px 80px #55431d0a; }
+.companion-strip { display: flex; align-items: center; gap: 14px; border-top: 1px solid var(--line); padding: 16px 8px; margin-top: 16px; }
+@keyframes nailong-sway { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg) translateY(-5px); } }
+@keyframes nailong-cuddle { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.035) rotate(-2deg); } }
+@keyframes nailong-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px) rotate(2deg); } }
+@keyframes nailong-breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.025, .975); } }
+@media (min-width: 1024px) {
+  .home-hero { padding: 40px 48px; }
+  .home-hero h1 { font-size: 2.5rem; }
+  .hero-companion { width: 250px; }
+  main.page-shell { padding-top: 32px; }
+}
+@media (max-width: 639px) {
+  .home-hero > .relative.grid { grid-template-columns: minmax(0, 1fr) 112px; gap: 8px; }
+  .home-hero { padding: 24px 20px; border-radius: 26px; }
+  .home-hero h1 { font-size: 24px; }
+  .hero-companion { width: 112px; align-self: start; padding-top: 28px; }
+  .hero-companion .nailong-caption { font-size: 10px; padding: 6px 8px; }
+  .home-hero .pill-button { padding: 10px 15px; font-size: 13px; }
+  .login-page { padding-block: 20px; }
+  .login-welcome { min-height: auto; padding: 24px; }
+  .login-companion { width: 160px; }
+  .login-welcome h1 { margin-top: 18px; font-size: 26px; }
+  .login-welcome > p:last-child { font-size: 13px; line-height: 1.8; }
+  .app-header > div { height: 68px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nailong-art, main, .success-pop { animation: none; }
+  .nailong-play .nailong-figure:hover, .pill-button:hover { transform: none; }
 }

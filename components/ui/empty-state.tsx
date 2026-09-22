@@ -1,3 +1,4 @@
+import { NailongCompanion } from "@/components/nailong-companion";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
@@ -35,7 +36,7 @@ export function EmptyState({
       )}
       role="status"
     >
-      {illustration ?? (Icon ? <span className="flex size-12 items-center justify-center rounded-2xl bg-white text-nailong-deep shadow-sm"><Icon className="size-6" aria-hidden="true" /></span> : null)}
+      {illustration ?? (variant === "warm" ? <NailongCompanion pose="sleep" className="size-28" /> : Icon ? <span className="flex size-12 items-center justify-center rounded-2xl bg-white text-nailong-deep shadow-sm"><Icon className="size-6" aria-hidden="true" /></span> : null)}
       <h2 className="mt-4 font-black text-brown">{title}</h2>
       {description && <p className="mt-2 max-w-md text-sm leading-6 text-muted">{description}</p>}
       {(action || secondaryAction) && <div className="mt-5 flex flex-wrap items-center justify-center gap-3">{action}{secondaryAction}</div>}

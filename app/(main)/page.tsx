@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { NailongCompanion } from "@/components/nailong-companion";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -74,7 +74,7 @@ export default async function HomePage({
     <main className="page-shell py-5 sm:py-9">
       <Flash {...flash} />
       <section
-        className={`relative overflow-hidden rounded-[2.25rem] p-6 shadow-[0_20px_45px_rgba(203,140,22,0.2)] sm:p-9 ${life.anniversaryMode ? "bg-gradient-to-br from-rose-200 via-amber-100 to-orange-200" : "bg-gradient-to-br from-[#f9d766] via-[#f6c84c] to-[#eeae32]"}`}
+        className={`home-hero relative overflow-hidden rounded-[2.25rem] p-6 shadow-[0_20px_45px_rgba(203,140,22,0.2)] sm:p-9 ${life.anniversaryMode ? "bg-gradient-to-br from-rose-200 via-amber-100 to-orange-200" : "bg-gradient-to-br from-[#f9d766] via-[#f6c84c] to-[#eeae32]"}`}
       >
         <div className="absolute -right-8 -top-12 size-52 rounded-full bg-white/20" />
         {life.anniversaryMode && (
@@ -86,14 +86,14 @@ export default async function HomePage({
         <div className="relative grid items-center gap-4 sm:grid-cols-[1fr_auto]">
           <div>
             <p className="text-sm font-bold text-brown/65">
-              你好，{data.profile.nickname}
+              美好的一天，从这里开始 · {data.profile.nickname}
             </p>
             <h1 className="mt-2 max-w-xl text-2xl font-black leading-tight tracking-tight text-brown sm:text-4xl">
               {life.anniversaryMode
                 ? `❤️ 今天是${life.anniversaryMode.title}`
                 : isAdmin
                   ? `今天也看看${life.partner?.nickname ?? "她"}有没有好好吃饭`
-                  : "奶龙提醒你：今天有好好吃饭吗？"}
+                  : "好好吃饭，好好相爱。"}
             </h1>
             {life.anniversaryMode && (
               <p className="mt-2 text-sm font-bold text-brown/65">
@@ -115,14 +115,7 @@ export default async function HomePage({
               </Link>
             </div>
           </div>
-          <Image
-            src="/nailong/nailong-3d.png"
-            alt="开心的奶龙"
-            width={176}
-            height={176}
-            priority
-            className="mx-auto size-36 object-contain drop-shadow-[0_16px_18px_rgba(119,72,8,0.2)] sm:size-44"
-          />
+          <NailongCompanion pose={life.anniversaryMode ? "love" : "wave"} interactive className="hero-companion" />
         </div>
       </section>
 

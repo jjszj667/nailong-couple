@@ -26,12 +26,12 @@ export function MobileNav({ profile }: { profile: Profile }) {
   const pathname = usePathname();
   const items = profile.role === "admin" ? adminItems : userItems;
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-line/80 bg-milk/95 px-2 pb-[max(0.45rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_30px_rgba(94,70,28,0.08)] backdrop-blur-xl md:hidden" aria-label="主要导航">
+    <nav className="mobile-nav fixed inset-x-0 bottom-0 z-50 border-t border-line/80 bg-milk/95 px-2 pb-[max(0.45rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_30px_rgba(94,70,28,0.08)] backdrop-blur-xl md:hidden" aria-label="主要导航">
       <div className="mx-auto grid max-w-md grid-cols-5">
         {items.map(({ href, label, icon: Icon }) => {
-          const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+          const active = href === "/" ? pathname === "/" : (pathname === href || pathname.startsWith(`${href}/`));
           return (
-            <Link key={href} href={href} className={cn("flex min-h-12 flex-col items-center justify-center gap-1 rounded-2xl text-[11px] font-medium text-muted", active && "bg-amber-100/80 text-brown")}>
+            <Link key={href} href={href} aria-current={active ? "page" : undefined} className={cn("flex min-h-12 flex-col items-center justify-center gap-1 rounded-2xl text-[11px] font-medium text-muted", active && "bg-amber-100/80 text-brown")}>
               <Icon className={cn("size-5", active && "text-nailong-deep")} strokeWidth={active ? 2.6 : 2} />
               {label}
             </Link>
