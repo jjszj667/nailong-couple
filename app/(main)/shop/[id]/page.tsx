@@ -1,5 +1,6 @@
+import { NailongCompanion } from "@/components/nailong-companion";
 import Link from "next/link";
-import { ArrowLeft, Clock3, Gift, PackageCheck, Sparkles } from "lucide-react";
+import { ArrowLeft, Clock3, PackageCheck, Sparkles } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import { redeemAction } from "@/app/actions";
 import { getProduct, getShopData } from "@/lib/data";
@@ -32,7 +33,7 @@ export default async function ProductPage({
     product.stock > 0 &&
     balance >= product.price;
   return (
-    <main className="page-shell py-7 sm:py-10">
+    <main data-feature="product" className="page-shell py-7 sm:py-10">
       <Link
         href="/shop"
         className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-muted"
@@ -63,7 +64,7 @@ export default async function ProductPage({
           </div>
           {product.product_type === "mystery" ? (
             <div className="mt-5 rounded-3xl bg-brown p-5 text-white">
-              <Gift className="size-6 text-nailong" />
+              <NailongCompanion pose="gift" className="size-24" />
               <p className="mt-3 font-black">里面是什么？现在不剧透</p>
               <p className="mt-2 text-sm leading-6 text-white/65">
                 {product.mystery_hint ||

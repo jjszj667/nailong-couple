@@ -1,9 +1,10 @@
+import { FeatureHero } from "@/components/feature-hero";
+import { NailongCompanion } from "@/components/nailong-companion";
 import Link from "next/link";
 import {
   ArrowLeft,
   CheckCircle2,
   Clock3,
-  Gift,
   Sparkles,
   Snowflake,
 } from "lucide-react";
@@ -42,7 +43,7 @@ export default async function OrderPage({
       </Link>
       <Flash {...flash} />
       <Card className="overflow-hidden p-0">
-        <div className="bg-gradient-to-br from-amber-100 to-amber-50 p-6 sm:p-8">
+        <FeatureHero feature="orders">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="text-xs font-bold text-nailong-deep">兑换详情</p>
@@ -53,7 +54,7 @@ export default async function OrderPage({
             <StatusBadge status={order.status} context="life" />
           </div>
           <Coin value={order.price_snapshot} className="mt-5 text-2xl" />
-        </div>
+        </FeatureHero>
         <div className="space-y-4 p-6 sm:p-8">
           <div className="grid gap-4 text-sm sm:grid-cols-2">
             <div>
@@ -91,7 +92,7 @@ export default async function OrderPage({
           )}
           {order.mystery_status && order.mystery_status !== "revealed" && (
             <div className="rounded-3xl bg-brown p-5 text-center text-white">
-              <Gift className="mx-auto size-8 text-nailong" />
+              <NailongCompanion pose="gift" className="mx-auto size-24" />
               <h2 className="mt-3 font-black">
                 {order.mystery_status === "ready"
                   ? "惊喜已经准备好啦"
@@ -115,7 +116,7 @@ export default async function OrderPage({
           )}
           {order.mystery_status === "revealed" && mystery && (
             <div className="success-pop rounded-3xl border border-rose-200 bg-gradient-to-br from-rose-50 to-amber-50 p-6 text-center">
-              <Sparkles className="mx-auto size-7 text-orange" />
+              <NailongCompanion pose="celebrate" className="mx-auto size-28" />
               <p className="mt-3 text-xs font-bold text-rose-500">
                 惊喜揭晓 ❤️
               </p>

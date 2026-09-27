@@ -1,3 +1,4 @@
+import { FeatureHero } from "@/components/feature-hero";
 import { ImageIcon, RotateCcw, Trash2 } from "lucide-react";
 import { permanentlyDeleteItemAction, restoreDeletedItemAction } from "@/app/actions";
 import { getRecentlyDeletedData } from "@/lib/life-data";
@@ -14,7 +15,7 @@ export const metadata = { title: "最近删除" };
 export default async function RecentlyDeletedPage({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string }> }) {
   const [items, flash] = await Promise.all([getRecentlyDeletedData(), searchParams]);
   return <main className="page-shell py-7 sm:py-10">
-    <div className="mb-7"><p className="text-xs font-bold text-nailong-deep">RECENTLY DELETED</p><h1 className="mt-1 text-3xl font-black text-brown">最近删除</h1><p className="mt-2 text-sm text-muted">照片和足迹会在这里保留，管理员可以清理超过 30 天的内容。</p></div>
+    <FeatureHero feature="profile"><p className="text-xs font-bold text-nailong-deep">RECENTLY DELETED</p><h1 className="mt-1 text-3xl font-black text-brown">最近删除</h1><p className="mt-2 text-sm text-muted">照片和足迹会在这里保留，管理员可以清理超过 30 天的内容。</p></FeatureHero>
     <Flash {...flash} />
     {items.length ? <div className="grid gap-4 sm:grid-cols-2">{items.map((item) => <Card key={`${item.type}-${item.id}`}>
       <MediaImage src={item.signedUrl} alt={item.title} className="aspect-[4/3] w-full rounded-2xl" />

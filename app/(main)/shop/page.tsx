@@ -1,3 +1,4 @@
+import { FeatureHero } from "@/components/feature-hero";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight, Gift, ShoppingBag } from "lucide-react";
@@ -23,22 +24,22 @@ export default async function ShopPage({
   const [data, flash] = await Promise.all([getShopData(), searchParams]);
   const balance = data.wallet?.available_balance ?? 0;
   return (
-    <main className="page-shell py-7 sm:py-10">
-      <section className="mb-7 flex flex-col gap-5 rounded-[2rem] bg-brown p-6 text-white sm:flex-row sm:items-center sm:justify-between sm:p-8">
+    <main data-feature="shop" className="page-shell feature-page py-7 sm:py-10">
+      <FeatureHero feature="shop">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-nailong">
+          <p className="text-xs font-bold uppercase tracking-wider text-nailong-deep">
             Reward shop
           </p>
           <h1 className="mt-1 text-3xl font-black">把认真吃饭换成快乐</h1>
-          <p className="mt-2 text-sm text-white/65">
+          <p className="mt-2 text-sm text-muted">
             这里的每件奖励，都是我们之后要一起做的事。
           </p>
         </div>
-        <div className="rounded-3xl bg-white/10 px-5 py-4">
-          <p className="text-xs text-white/60">当前可用</p>
-          <Coin value={balance} className="mt-1 text-2xl text-white" />
+        <div className="shop-balance rounded-3xl bg-white/70 px-5 py-4">
+          <p className="text-xs text-muted">当前可用</p>
+          <Coin value={balance} className="mt-1 text-2xl text-brown" />
         </div>
-      </section>
+      </FeatureHero>
       <Flash error={flash.error} />
       {data.products.length ? (
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

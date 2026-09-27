@@ -1,3 +1,4 @@
+import { FeatureHero } from "@/components/feature-hero";
 import { Sparkles } from "lucide-react";
 import { getPublishedReleases } from "@/lib/data";
 import { Card } from "@/components/ui/card";
@@ -8,9 +9,9 @@ export const metadata = { title: "更新日志" };
 export default async function ReleasesPage() {
   const releases = await getPublishedReleases();
   return <main className="page-shell max-w-4xl py-7 sm:py-10">
-    <p className="text-xs font-bold text-nailong-deep">WHAT IS NEW</p>
+    <FeatureHero feature="releases"><p className="text-xs font-bold text-nailong-deep">WHAT IS NEW</p>
     <h1 className="mt-1 text-3xl font-black text-brown">更新日志</h1>
-    <p className="mt-2 text-sm text-muted">小屋里的每一次新变化，都记在这里。</p>
+    <p className="mt-2 text-sm text-muted">小屋里的每一次新变化，都记在这里。</p></FeatureHero>
     <div className="mt-7 space-y-4">
       {releases.length ? releases.map((item) => (
         <Card key={item.id}>

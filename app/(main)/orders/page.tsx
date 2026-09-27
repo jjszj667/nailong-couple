@@ -1,3 +1,4 @@
+import { FeatureHero } from "@/components/feature-hero";
 import Link from "next/link";
 import { ArrowRight, ReceiptText } from "lucide-react";
 import { getOrders } from "@/lib/data";
@@ -17,8 +18,8 @@ export default async function OrdersPage({
 }) {
   const [orders, flash] = await Promise.all([getOrders(), searchParams]);
   return (
-    <main className="page-shell py-7 sm:py-10">
-      <div className="mb-7">
+    <main data-feature="orders" className="page-shell feature-page py-7 sm:py-10">
+      <FeatureHero feature="orders">
         <p className="text-xs font-bold uppercase tracking-wider text-nailong-deep">
           My rewards
         </p>
@@ -26,7 +27,7 @@ export default async function OrdersPage({
         <p className="mt-2 text-sm text-muted">
           每一次申请、确认和兑现都会留在这里。
         </p>
-      </div>
+      </FeatureHero>
       <Flash {...flash} />
       {orders.length ? (
         <div className="space-y-3">

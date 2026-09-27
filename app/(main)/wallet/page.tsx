@@ -1,3 +1,4 @@
+import { FeatureHero } from "@/components/feature-hero";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -15,8 +16,8 @@ export const metadata = { title: "奶龙币钱包" };
 export default async function WalletPage() {
   const { wallet, transactions, partner } = await getWalletData();
   return (
-    <main className="page-shell py-7 sm:py-10">
-      <div className="mb-7">
+    <main data-feature="wallet" className="page-shell feature-page py-7 sm:py-10">
+      <FeatureHero feature="wallet">
         <p className="text-xs font-bold uppercase tracking-wider text-nailong-deep">
           Nailong wallet
         </p>
@@ -24,7 +25,7 @@ export default async function WalletPage() {
         <p className="mt-2 text-sm text-muted">
           每一枚奶龙币从哪里来、去了哪里，都清清楚楚。
         </p>
-      </div>
+      </FeatureHero>
       <section className="grid gap-4 sm:grid-cols-3">
         <Card className="bg-brown text-white sm:col-span-3">
           <p className="text-sm text-white/65">总奶龙币</p>

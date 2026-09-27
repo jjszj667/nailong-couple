@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, type CSSProperties, type KeyboardEvent } from "react";
 import { Check, Heart } from "lucide-react";
 import { saveMoodAction } from "@/app/actions";
 import { MOODS, MOOD_TAGS } from "@/lib/life";
@@ -10,52 +10,40 @@ import { MoodIcon } from "@/components/mood-icon";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { cn } from "@/lib/utils";
 
+const messages = [
+  "不用急着好起来，先给自己一个拥抱。", "难过也可以被温柔接住，我在这里。",
+  "今天有一点点累，那就慢慢来。", "平平淡淡，也是舒服的一天。",
+  "一点点小确幸，也值得被记住。", "把这份好心情，分一点给喜欢的人。", "今天的快乐，值得一个大大的拥抱！",
+];
+
 export function MoodSelector({ date, mood, returnTo = "/" }: { date: string; mood?: Mood | null; returnTo?: string }) {
   const [value, setValue] = useState(mood?.value ?? "neutral");
-  const current = MOODS.find((item) => item.value === value) ?? MOODS[3];
-  return (
-    <form action={saveMoodAction}>
-      <input type="hidden" name="date" value={date} />
-      <input type="hidden" name="value" value={value} />
-      <input type="hidden" name="return_to" value={returnTo} />
-      <div className="relative overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-amber-50 to-orange-50 px-4 py-5 text-center">
-        <div className="absolute inset-x-8 bottom-4 h-12 rounded-full opacity-25 blur-2xl" style={{ backgroundColor: current.color }} />
-        <div className="relative mx-auto size-36 overflow-hidden rounded-[2rem] border-4 border-white bg-white shadow-lg">
-          <Image src={current.image} alt={`${current.label}的奶龙表情`} fill sizes="144px" className="object-cover transition-transform duration-300" priority />
-        </div>
-        <p className="relative mt-2 text-xl font-black text-brown">{current.label}</p>
-        <p className="relative mt-1 text-xs text-muted">轻轻点一下，选出今天最接近的感觉</p>
-      </div>
-
-      <div className="mt-4 grid grid-cols-7 gap-1.5" aria-label="心情选择器">
-        {MOODS.map((item) => (
-          <button key={item.value} type="button" onClick={() => setValue(item.value)} aria-label={item.label} aria-pressed={value === item.value}
-            className={cn("flex min-h-14 flex-col items-center justify-center rounded-2xl border text-lg transition", value === item.value ? "scale-[1.04] border-amber-400 bg-amber-100 shadow-sm" : "border-transparent bg-stone-50 hover:bg-amber-50")}
-          >
-            <MoodIcon image={item.image} label={item.label} className="size-9 border border-white shadow-sm" sizes="36px" />
-            <span className="mt-0.5 hidden text-[9px] font-semibold text-muted sm:block">{item.label}</span>
-          </button>
-        ))}
-      </div>
-
-      <fieldset className="mt-5">
-        <legend className="text-sm font-bold text-brown">今天发生了什么？<span className="ml-1 font-normal text-muted">可选，最多 8 个</span></legend>
-        <div className="mt-3 flex max-h-40 flex-wrap gap-2 overflow-y-auto pr-1">
-          {MOOD_TAGS.map((tag) => (
-            <label key={tag} className="relative cursor-pointer">
-              <input type="checkbox" name="tags" value={tag} defaultChecked={mood?.tags.includes(tag)} className="peer sr-only" />
-              <span className="inline-flex min-h-9 items-center gap-1 rounded-full border border-line bg-white px-3 text-xs font-medium text-muted transition peer-checked:border-amber-400 peer-checked:bg-amber-100 peer-checked:text-brown">
-                <Check className="hidden size-3 peer-checked:block" />{tag}
-              </span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
-
-      <label className="mt-5 block text-sm font-bold text-brown">给今天留一句备注<span className="ml-1 font-normal text-muted">可选</span>
-        <textarea name="note" className="field mt-2 min-h-24 resize-y" maxLength={500} defaultValue={mood?.note ?? ""} placeholder="不用分析自己，只写此刻想留下的话。" />
-      </label>
-      <SubmitButton className="mt-4 w-full" pendingText="正在收藏心情…"><Heart className="size-4" />{mood ? "更新今天的心情" : "收藏今天的心情"}</SubmitButton>
-    </form>
-  );
+  const [tags, setTags] = useState<string[]>(mood?.tags ?? []);
+  const index = MOODS.findIndex((item) => item.value === value);
+  const current = MOODS[index];
+  function onKey(event: KeyboardEvent<HTMLButtonElement>, i: number) {
+    const next = event.key === "Home" ? 0 : event.key === "End" ? 6 : ["ArrowRight", "ArrowDown"].includes(event.key) ? (i + 1) % 7 : ["ArrowLeft", "ArrowUp"].includes(event.key) ? (i + 6) % 7 : -1;
+    if (next < 0) return;
+    event.preventDefault();
+    setValue(MOODS[next].value);
+    (event.currentTarget.parentElement?.children[next] as HTMLButtonElement)?.focus();
+  }
+  return <form action={saveMoodAction} className="mood-composer" style={{ "--mood-color": current.color } as CSSProperties}>
+    <input type="hidden" name="date" value={date} /><input type="hidden" name="value" value={value} /><input type="hidden" name="return_to" value={returnTo} />
+    <div className="mood-stage">
+      <span className="mood-orbit" aria-hidden="true" />
+      <div key={value} className={`mood-character mood-energy-${index}`}><Image src={current.image} alt={`${current.label}的奶龙`} fill sizes="(max-width: 640px) 170px, 210px" className="object-contain" /></div>
+      <div className="mood-stage-copy" aria-live="polite"><span className="eyebrow">HOW ARE YOU, REALLY?</span><p className="mood-current-label">{current.label}</p><p>{messages[index]}</p></div>
+    </div>
+    <div className="mood-options" role="radiogroup" aria-label="今天的心情">
+      {MOODS.map((item, i) => <button key={item.value} type="button" role="radio" aria-checked={value === item.value} tabIndex={value === item.value ? 0 : -1} onClick={() => setValue(item.value)} onKeyDown={(event) => onKey(event, i)} className={cn("mood-option", value === item.value && "is-selected")}>
+        <MoodIcon image={item.image} label={item.label} className="mood-option-icon" sizes="64px" /><span>{item.label}</span><span className="mood-option-dot" aria-hidden="true" />
+      </button>)}
+    </div>
+    <fieldset className="mt-6"><legend className="text-sm font-semibold text-brown">是什么让你有这种感觉？ <span className="font-normal text-muted">{tags.length}/8 · 可选</span></legend>
+      <div className="mood-tags mt-3 flex flex-wrap gap-2">{MOOD_TAGS.map((tag) => <label key={tag} className="relative cursor-pointer"><input type="checkbox" name="tags" value={tag} checked={tags.includes(tag)} disabled={!tags.includes(tag) && tags.length >= 8} onChange={(event) => setTags(event.target.checked ? [...tags, tag] : tags.filter((item) => item !== tag))} className="peer sr-only" /><span className="mood-tag"><Check className="size-3" />{tag}</span></label>)}</div>
+    </fieldset>
+    <label className="mt-6 block text-sm font-semibold text-brown">还有什么想说的？<span className="ml-2 font-normal text-muted">可选</span><textarea name="note" className="field mt-3 min-h-24 resize-y" maxLength={500} defaultValue={mood?.note ?? ""} placeholder="不必组织语言，写下此刻的感受就好。" /></label>
+    <SubmitButton className="mt-4 w-full" pendingText="正在收藏这份心情…"><Heart className="size-4" />{mood ? "更新今天的心情" : "收藏今天的心情"}</SubmitButton>
+  </form>;
 }

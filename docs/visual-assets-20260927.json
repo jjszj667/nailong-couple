@@ -1,0 +1,72 @@
+{
+  "tool": "Built-in image_gen",
+  "reference": "public/nailong/companion-atlas.png",
+  "moodPrompts": [
+    [
+      "very-unpleasant",
+      "very sad and vulnerable: seated with knees together, one tiny tear, gently lowered head, raised inner brows, large soft watery eyes, tiny downturned mouth. Tender and approachable, not exaggerated crying."
+    ],
+    [
+      "unpleasant",
+      "sad: sitting with shoulders slightly slumped, gentle downturned mouth, soft lowered gaze, hand resting on cheek, no tears."
+    ],
+    [
+      "slightly-unpleasant",
+      "a little low and tired: tilted head, one hand supporting cheek, slightly droopy eyelids, tiny uncertain pout, relaxed asymmetrical pose."
+    ],
+    [
+      "neutral",
+      "peaceful and content: seated relaxed, eyes softly half closed, small serene smile, arms comfortably resting on round belly, gentle breathing pose."
+    ],
+    [
+      "slightly-pleasant",
+      "feeling pretty good: a shy warm smile, sparkling wide eyes, subtle pink blush, one hand giving a tiny thumbs-up, head playfully tilted."
+    ],
+    [
+      "pleasant",
+      "happy: lively wide smiling eyes, joyful open mouth, both little arms open in a welcoming gesture, weight on one foot, natural expressive pose."
+    ],
+    [
+      "very-pleasant",
+      "overjoyed: jubilant mid-hop pose, arms raised, eyes joyfully curved closed, wide laughing mouth, cute soft pink cheeks, two tiny golden sparkles floating beside the head."
+    ]
+  ],
+  "featurePrompt": "Use case: stylized-concept. Make ONE perfectly aligned 3 columns by 2 rows transparent sprite atlas for a cozy couple app. Reference image defines the identical character: soft smooth yellow chubby pear-shaped dinosaur, huge glossy eyes, tiny arms and stout feet. Premium expressive 3D animated movie rendering. SIX full-body distinct poses in equal square cells, all centered with 12% clear margins, no overlaps. Top row left: playful photographer holding small mint camera at chest, one eye winking. Top middle: proudly presenting a pink ribbon gift box, delighted surprised face. Top right: holding a cream mini calendar with a red heart icon (NO text/numerals), affectionate smile. Bottom row left: explorer with small sage backpack holding a folded map, curious gaze, stepping forward. Bottom middle: sitting and writing in open lavender notebook with pencil, concentrated playful face. Bottom right: jubilant celebration holding small golden star trophy, arms raised and wide laugh. Absolutely same character identity across all cells. No labels no typography no grid lines. Actual transparent background; preserve alpha, no white/checkerboard backdrop. 3:2 canvas, exactly 3 columns 2 rows. Fine warm studio lighting.",
+  "sources": [
+    {
+      "name": "very-unpleasant",
+      "generatedFile": "exec-c3d12813-af41-4085-8262-fab66126cfed.png",
+      "output": "public/nailong/moods-v3/very-unpleasant.webp"
+    },
+    {
+      "name": "unpleasant",
+      "generatedFile": "exec-8153657b-62ce-4b6b-acf7-91b53e265689.png",
+      "output": "public/nailong/moods-v3/unpleasant.webp"
+    },
+    {
+      "name": "slightly-unpleasant",
+      "generatedFile": "exec-e93830ed-1a01-4468-b260-ccb04f3c9688.png",
+      "output": "public/nailong/moods-v3/slightly-unpleasant.webp"
+    },
+    {
+      "name": "neutral",
+      "generatedFile": "exec-9c5c19ac-1482-4b5c-ba45-c3b8dc9f3566.png",
+      "output": "public/nailong/moods-v3/neutral.webp"
+    },
+    {
+      "name": "slightly-pleasant",
+      "generatedFile": "exec-4ce08508-b128-4c25-817f-8845109e5f6f.png",
+      "output": "public/nailong/moods-v3/slightly-pleasant.webp"
+    },
+    {
+      "name": "pleasant",
+      "generatedFile": "exec-dd9382b8-c2e1-4c07-8f40-ba82c90a65f5.png",
+      "output": "public/nailong/moods-v3/pleasant.webp"
+    },
+    {
+      "name": "very-pleasant",
+      "generatedFile": "exec-c93e393c-b9f9-422b-b16c-dd5082326d9f.png",
+      "output": "public/nailong/moods-v3/very-pleasant.webp"
+    }
+  ]
+}

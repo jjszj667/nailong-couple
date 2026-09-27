@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { FeatureHero } from "@/components/feature-hero";
 import { CalendarHeart, Heart, MapPin, Plane, Sparkles } from "lucide-react";
 import { getStoryData } from "@/lib/life-data";
 import { formatDate } from "@/lib/utils";
@@ -20,23 +20,15 @@ const icons: Record<string, typeof Heart> = {
 export default async function StoryPage() {
   const data = await getStoryData();
   return (
-    <main className="page-shell max-w-4xl py-7 sm:py-10">
-      <header className="relative overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-amber-100 via-yellow-50 to-rose-100 p-6 sm:p-9">
-        <Image
-          src="/nailong/nailong-3d.png"
-          alt="陪我们翻故事的奶龙"
-          width={132}
-          height={132}
-          className="absolute -right-2 bottom-0 size-28 object-contain opacity-80 sm:size-32"
-        />
-        <div className="relative max-w-xl pr-20">
+    <main data-feature="story" className="page-shell feature-page max-w-4xl py-7 sm:py-10">
+      <FeatureHero feature="story"><div>
           <p className="text-xs font-bold text-nailong-deep">OUR STORY</p>
           <h1 className="mt-2 text-3xl font-black text-brown">我们的故事</h1>
           <p className="mt-2 text-sm leading-6 text-muted">
             只有被我们认真标记的重要日子，才会留在这条时间线上。
           </p>
         </div>
-      </header>
+      </FeatureHero>
 
       {data.events.length ? (
         <section className="relative mx-auto mt-8 max-w-2xl pl-10 sm:pl-14">

@@ -1,4 +1,5 @@
 import { NailongCompanion } from "@/components/nailong-companion";
+import { HomeExplore } from "@/components/home-explore";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -71,7 +72,7 @@ export default async function HomePage({
   const partnerCompletedMeals = todayMeals.filter((item) => item.done).length;
 
   return (
-    <main className="page-shell py-5 sm:py-9">
+    <main className="page-shell home-page py-5 sm:py-9">
       <Flash {...flash} />
       <section
         className={`home-hero relative overflow-hidden rounded-[2.25rem] p-6 shadow-[0_20px_45px_rgba(203,140,22,0.2)] sm:p-9 ${life.anniversaryMode ? "bg-gradient-to-br from-rose-200 via-amber-100 to-orange-200" : "bg-gradient-to-br from-[#f9d766] via-[#f6c84c] to-[#eeae32]"}`}
@@ -92,8 +93,8 @@ export default async function HomePage({
               {life.anniversaryMode
                 ? `❤️ 今天是${life.anniversaryMode.title}`
                 : isAdmin
-                  ? `今天也看看${life.partner?.nickname ?? "她"}有没有好好吃饭`
-                  : "好好吃饭，好好相爱。"}
+                  ? <>她的每一天，<br /><span className="hero-accent">都想好好陪伴。</span></>
+                  : <>生活的小事，<br /><span className="hero-accent">都是关于你。</span></>}
             </h1>
             {life.anniversaryMode && (
               <p className="mt-2 text-sm font-bold text-brown/65">
@@ -102,6 +103,7 @@ export default async function HomePage({
                   ` 还有 ${life.otherTodayEvents.length} 个特别日子也在今天。`}
               </p>
             )}
+            <p className="hero-description">好好吃饭，认真感受。和你一起，把每一天过成值得收藏的一天。</p>
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <span className="rounded-full bg-white/55 px-4 py-2 text-sm font-bold text-brown">
                 {isAdmin ? (
@@ -286,7 +288,9 @@ export default async function HomePage({
         </Card>
       </section>
 
-      <section className="mt-6 grid gap-6 lg:grid-cols-[1.15fr_.85fr]">
+      <HomeExplore />
+
+      <section id="mood" className="home-journal mt-6 grid gap-6 lg:grid-cols-[1.15fr_.85fr]">
         <div className="space-y-6">
           <Card>
             <div className="mb-4 flex items-center justify-between">
@@ -486,7 +490,7 @@ export default async function HomePage({
               </div>
               <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-nailong to-orange"
+                  className="progress-fill h-full rounded-full bg-gradient-to-r from-nailong to-orange"
                   style={{ width: `${data.goalProgress}%` }}
                 />
               </div>

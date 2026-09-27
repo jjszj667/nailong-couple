@@ -1,3 +1,4 @@
+import { FeatureHero } from "@/components/feature-hero";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -36,7 +37,7 @@ export default async function DailyReportPage({
         返回日历
       </Link>
       <Card className="overflow-hidden p-0">
-        <header className="relative overflow-hidden bg-gradient-to-br from-amber-200 via-nailong to-orange-300 p-7 sm:p-10">
+        <FeatureHero feature="daily">
           <div className="absolute -right-10 -top-10 size-40 rounded-full bg-white/20" />
           <p className="relative text-xs font-bold text-brown/60">
             NAILONG DAILY
@@ -47,7 +48,7 @@ export default async function DailyReportPage({
           <p className="relative mt-2 text-sm font-semibold text-brown/70">
             {formatDate(date)} · 今天的生活卡片
           </p>
-        </header>
+        </FeatureHero>
         <div className="space-y-4 p-5 sm:p-8">
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-3xl bg-rose-50 p-4">

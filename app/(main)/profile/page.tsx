@@ -1,3 +1,4 @@
+import { FeatureHero } from "@/components/feature-hero";
 import Link from "next/link";
 import {
   Award,
@@ -138,6 +139,7 @@ export default async function ProfilePage({
   const today = dateInShanghai();
   return (
     <main className="page-shell max-w-5xl py-6 sm:py-10">
+      <FeatureHero feature="profile"><p className="eyebrow">MAKE YOURSELF AT HOME</p><h1>欢迎回到，你的小世界。</h1><p>关于你，关于我们，都好好收在这里。</p></FeatureHero>
       <Flash {...flash} />
       <Card className="relative overflow-hidden bg-gradient-to-br from-amber-100 to-orange-50">
         <div className="absolute -right-8 -top-12 size-44 rounded-full bg-nailong/20" />
@@ -148,9 +150,9 @@ export default async function ProfilePage({
             className="size-20 rounded-[1.75rem] border-4 border-white shadow-md"
           />
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-2xl font-black text-brown">
+            <h2 className="truncate text-2xl font-black text-brown">
               {data.profile.nickname}
-            </h1>
+            </h2>
             <p className="mt-1 flex items-center gap-1 text-xs font-bold text-muted">
               <Heart className="size-3.5 text-rose-400" />
               JJ的快乐小屋成员

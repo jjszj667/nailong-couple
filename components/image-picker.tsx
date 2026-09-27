@@ -1,7 +1,8 @@
 "use client";
 
+import { NailongCompanion } from "@/components/nailong-companion";
 import { useEffect, useRef, useState } from "react";
-import { ImagePlus, LoaderCircle } from "lucide-react";
+import { CheckCircle2, LoaderCircle } from "lucide-react";
 import { MediaImage } from "@/components/ui/media-image";
 import { compressImage, formatImageBytes, type ImagePurpose } from "@/lib/image-compression";
 
@@ -26,17 +27,17 @@ export function ImagePicker({ name = "image", label = "选择一张照片", requ
   }, [processing]);
 
   return (
-    <label className="group block cursor-pointer rounded-3xl border-2 border-dashed border-line bg-white/70 p-3 text-center transition hover:border-nailong-deep">
+    <label className="upload-zone group block cursor-pointer rounded-3xl border-2 border-dashed border-line bg-white/70 p-3 text-center transition hover:border-nailong-deep">
       {preview ? (
         <MediaImage src={preview} alt="待上传照片预览" className="aspect-[4/3] w-full rounded-2xl" />
       ) : (
         <span className="flex aspect-[4/3] flex-col items-center justify-center gap-3 rounded-2xl bg-amber-50 text-muted">
-          <ImagePlus className="size-10 text-nailong-deep" />
+          <NailongCompanion pose="camera" className="upload-character" />
           <span className="font-medium">{label}</span>
-          <span className="text-xs">JPG / PNG / WebP / HEIC，选择后自动转换压缩</span>
+          <span className="text-xs">照片会自动优化，留住清晰的这一刻</span>
         </span>
       )}
-      {status && <span className="mt-3 flex items-center justify-center gap-2 text-xs font-bold text-nailong-deep"><LoaderCircle className="size-4 animate-spin" />{status}</span>}
+      {status && <span role="status" className="mt-3 flex items-center justify-center gap-2 text-xs font-bold text-nailong-deep">{processing ? <LoaderCircle className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}{status}</span>}
       {error && <span className="mt-3 block text-xs font-bold text-red-600">{error}</span>}
       <input
         ref={inputRef}

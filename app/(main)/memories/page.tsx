@@ -1,3 +1,4 @@
+import { FeatureHero } from "@/components/feature-hero";
 import Link from "next/link";
 import { Camera, CalendarDays, ImagePlus, Search } from "lucide-react";
 import { getMemoriesData } from "@/lib/data";
@@ -33,8 +34,8 @@ export default async function MemoriesPage({
   );
 
   return (
-    <main className="page-shell py-7 sm:py-10">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <main data-feature="memories" className="page-shell feature-page py-7 sm:py-10">
+      <FeatureHero feature="memories">
         <div>
           <p className="text-xs font-bold uppercase tracking-wider text-nailong-deep">
             Our memories
@@ -50,7 +51,7 @@ export default async function MemoriesPage({
         >
           <ImagePlus className="size-4" /> 添加生活照片
         </Link>
-      </div>
+      </FeatureHero>
 
       <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
         {categories.map(([value, label]) => (

@@ -24,7 +24,8 @@ export function SubmitButton({
       name={name}
       value={value}
       disabled={pending}
-      className={cn("pill-button", className)}
+      aria-busy={pending}
+      className={cn("pill-button", pending && "button-pending", className)}
     >
       {pending ? <><LoaderCircle className="size-4 animate-spin" />{pendingText}</> : children}
     </button>

@@ -1,3 +1,5 @@
+import { NailongCompanion } from "@/components/nailong-companion";
+import { FeatureHero } from "@/components/feature-hero";
 import { Camera, Check, Clock3, Gift, Info, LockKeyhole, Moon, Sun } from "lucide-react";
 import { submitCheckinAction } from "@/app/actions";
 import { getAdminPartnerCheckinData, getCheckinPageData } from "@/lib/data";
@@ -40,8 +42,8 @@ export default async function CheckinPage({ searchParams }: { searchParams: Prom
     );
 
     return (
-      <main className="page-shell py-7 sm:py-10">
-        <div className="mb-7">
+      <main data-feature="checkin" className="page-shell feature-page py-7 sm:py-10">
+        <FeatureHero feature="checkin">
           <p className="text-xs font-bold uppercase tracking-wider text-nailong-deep">
             Her daily check-in
           </p>
@@ -51,7 +53,7 @@ export default async function CheckinPage({ searchParams }: { searchParams: Prom
           <p className="mt-2 text-sm leading-6 text-muted">
             这里只用来查看她的签到状态和照片，管理员账户不再参与签到。
           </p>
-        </div>
+        </FeatureHero>
         <Flash {...flash} />
 
         {!data.partner ? (
@@ -171,8 +173,8 @@ export default async function CheckinPage({ searchParams }: { searchParams: Prom
   ] as const;
 
   return (
-    <main className="page-shell py-7 sm:py-10">
-      <div className="mb-7"><p className="text-xs font-bold uppercase tracking-wider text-nailong-deep">Daily check-in</p><h1 className="mt-1 text-3xl font-black tracking-tight text-brown">每天限时签到</h1><p className="mt-2 text-sm leading-6 text-muted">午间 11:00–14:00、晚间 16:00–22:00 为准时签到。只要一餐准时，今日就算完成；补签不算有效签到。</p></div>
+    <main data-feature="checkin" className="page-shell feature-page py-7 sm:py-10">
+      <FeatureHero feature="checkin"><p className="text-xs font-bold uppercase tracking-wider text-nailong-deep">Daily check-in</p><h1 className="mt-1 text-3xl font-black tracking-tight text-brown">每天限时签到</h1><p className="mt-2 text-sm leading-6 text-muted">午间 11:00–14:00、晚间 16:00–22:00 为准时签到。只要一餐准时，今日就算完成；补签不算有效签到。</p></FeatureHero>
       <Flash {...flash} />
 
       <section className="mb-6 grid gap-3 sm:grid-cols-3">
@@ -189,7 +191,7 @@ export default async function CheckinPage({ searchParams }: { searchParams: Prom
               {checkin && <span className="flex shrink-0 items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-bold text-green-700"><Check className="size-3.5" />{checkin.checkin_kind === "makeup" ? "已补签" : "已完成"}</span>}
             </div>
             {checkin ? (
-              <div className="flex min-h-64 flex-col items-center justify-center rounded-3xl bg-white/65 px-5 text-center"><div className="text-5xl">🍚</div><p className="mt-4 font-bold text-brown">这一餐已经好好记录啦</p><p className="mt-1 text-sm text-muted">{checkin.checkin_kind === "makeup" ? `本次为补签，获得 ${checkin.reward_amount} 枚情侣币；不算有效签到。` : `本次为准时签到，获得 ${checkin.reward_amount} 枚情侣币。`}</p></div>
+              <div className="flex min-h-64 flex-col items-center justify-center rounded-3xl bg-white/65 px-5 text-center"><NailongCompanion pose="celebrate" className="size-28" /><p className="mt-4 font-bold text-brown">这一餐已经好好记录啦</p><p className="mt-1 text-sm text-muted">{checkin.checkin_kind === "makeup" ? `本次为补签，获得 ${checkin.reward_amount} 枚情侣币；不算有效签到。` : `本次为准时签到，获得 ${checkin.reward_amount} 枚情侣币。`}</p></div>
             ) : window.isBeforeWindow ? (
               <div className="flex min-h-64 flex-col items-center justify-center rounded-3xl border border-dashed border-amber-200 bg-amber-50/70 px-6 text-center">
                 <span className="flex size-14 items-center justify-center rounded-3xl bg-white text-nailong-deep shadow-sm"><LockKeyhole className="size-6" /></span>

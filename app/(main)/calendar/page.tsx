@@ -1,3 +1,4 @@
+import { FeatureHero } from "@/components/feature-hero";
 import Link from "next/link";
 import {
   CalendarHeart,
@@ -82,14 +83,14 @@ export default async function CalendarPage({
   };
 
   return (
-    <main className="page-shell py-6 sm:py-10">
-      <div className="mb-6">
+    <main data-feature="calendar" className="page-shell feature-page py-6 sm:py-10">
+      <FeatureHero feature="calendar">
         <p className="text-xs font-bold text-nailong-deep">OUR TIME</p>
         <h1 className="mt-1 text-3xl font-black text-brown">我们的日历</h1>
         <p className="mt-2 text-sm text-muted">
           心情、吃饭、纪念日和一句话，都从同一条时间线回看。
         </p>
-      </div>
+      </FeatureHero>
       <Flash ok={query.ok} error={query.error} />
       <div className="mb-6 grid gap-4 lg:grid-cols-[1.15fr_.85fr]">
         <MoodTrend moods={data.recentMoods} dates={data.trendDates} />
@@ -144,7 +145,7 @@ export default async function CalendarPage({
               </div>
             ))}
           </div>
-          <div className="grid grid-cols-7 gap-1 sm:gap-2">
+          <div className="calendar-grid grid grid-cols-7 gap-1 sm:gap-2">
             {cells.map((date, index) =>
               date ? (
                 (() => {

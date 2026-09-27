@@ -1,3 +1,6 @@
+"use client";
+
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Boxes, CalendarHeart, ClipboardCheck, Coins, Database, Footprints, Gift, Heart, LayoutDashboard, Megaphone, Settings, SmilePlus, Trophy, Utensils } from "lucide-react";
 
@@ -20,14 +23,15 @@ const items = [
 ] as const;
 
 export function AdminNav() {
+  const pathname = usePathname();
   return (
-    <aside className="soft-card h-fit p-3 lg:sticky lg:top-6 lg:w-56">
+    <aside className="admin-nav soft-card h-fit p-3 lg:sticky lg:top-6 lg:w-56">
       <Link href="/" className="mb-3 flex items-center gap-2 rounded-2xl px-3 py-2 text-sm font-semibold text-muted hover:bg-amber-50">
         <ArrowLeft className="size-4" />返回小世界
       </Link>
       <nav className="grid grid-cols-3 gap-1 sm:grid-cols-4 lg:grid-cols-1">
         {items.map(([href, label, Icon]) => (
-          <Link key={href} href={href} className="flex items-center justify-center gap-2 rounded-2xl px-3 py-2.5 text-sm font-semibold text-brown hover:bg-amber-100 lg:justify-start">
+          <Link key={href} href={href} aria-current={(href === "/admin" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`)) ? "page" : undefined} className="flex items-center justify-center gap-2 rounded-2xl px-3 py-2.5 text-sm font-semibold text-brown hover:bg-amber-100 lg:justify-start">
             <Icon className="size-4 text-nailong-deep" />{label}
           </Link>
         ))}

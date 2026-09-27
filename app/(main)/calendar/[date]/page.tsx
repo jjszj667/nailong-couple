@@ -1,3 +1,4 @@
+import { NailongCompanion } from "@/components/nailong-companion";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -82,7 +83,7 @@ export default async function DayDetailPage({
       >
         <ArrowLeft className="size-4" /> 返回日历
       </Link>
-      <Flash {...flash} />
+      <Flash {...flash} /><div className="day-companion"><NailongCompanion pose="calendar" className="size-20" /><p>这一天的心情与小事，都好好收在这里。</p></div>
 
       <header className="relative mb-6 overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-amber-200 via-nailong to-orange-200 p-6 sm:p-9">
         <div className="absolute -right-8 -top-10 size-40 rounded-full bg-white/25" />

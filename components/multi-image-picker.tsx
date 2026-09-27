@@ -1,7 +1,8 @@
 "use client";
 
+import { NailongCompanion } from "@/components/nailong-companion";
 import { useEffect, useRef, useState } from "react";
-import { ImagePlus, LoaderCircle } from "lucide-react";
+import { CheckCircle2, LoaderCircle } from "lucide-react";
 import { compressImage, formatImageBytes } from "@/lib/image-compression";
 
 export function MultiImagePicker() {
@@ -30,7 +31,7 @@ export function MultiImagePicker() {
   }, [processing]);
 
   return (
-    <label className="block cursor-pointer rounded-3xl border-2 border-dashed border-line bg-white/70 p-3 transition hover:border-nailong-deep">
+    <label className="upload-zone block cursor-pointer rounded-3xl border-2 border-dashed border-line bg-white/70 p-3 transition hover:border-nailong-deep">
       {previews.length ? (
         <span className="grid grid-cols-3 gap-2">
           {previews.map((preview, index) => (
@@ -46,12 +47,12 @@ export function MultiImagePicker() {
         </span>
       ) : (
         <span className="flex min-h-32 flex-col items-center justify-center gap-2 rounded-2xl bg-amber-50 text-center text-muted">
-          <ImagePlus className="size-9 text-nailong-deep" />
+          <NailongCompanion pose="camera" className="upload-character" />
           <span className="font-bold text-brown">选择 1～9 张生活照片</span>
-          <span className="text-xs">JPG / PNG / WebP / HEIC，选择后逐张自动转换压缩</span>
+          <span className="text-xs">支持手机照片，一次最多 9 张</span>
         </span>
       )}
-      {status && <span className="mt-3 flex items-center justify-center gap-2 text-xs font-bold text-nailong-deep"><LoaderCircle className="size-4 animate-spin" />{status}</span>}
+      {status && <span role="status" className="mt-3 flex items-center justify-center gap-2 text-xs font-bold text-nailong-deep">{processing ? <LoaderCircle className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}{status}</span>}
       {error && <span className="mt-3 block text-center text-xs font-bold text-red-600">{error}</span>}
       <input
         ref={inputRef}
