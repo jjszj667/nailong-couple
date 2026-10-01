@@ -1,3 +1,4 @@
+import { BirthdaySurprise } from "@/components/birthday-surprise";
 import { NailongCompanion } from "@/components/nailong-companion";
 import { HomeExplore } from "@/components/home-explore";
 import Link from "next/link";
@@ -74,7 +75,7 @@ export default async function HomePage({
   return (
     <main className="page-shell home-page py-5 sm:py-9">
       <Flash {...flash} />
-      <section
+      <BirthdaySurprise><section
         className={`home-hero relative overflow-hidden rounded-[2.25rem] p-6 shadow-[0_20px_45px_rgba(203,140,22,0.2)] sm:p-9 ${life.anniversaryMode ? "bg-gradient-to-br from-rose-200 via-amber-100 to-orange-200" : "bg-gradient-to-br from-[#f9d766] via-[#f6c84c] to-[#eeae32]"}`}
       >
         <div className="absolute -right-8 -top-12 size-52 rounded-full bg-white/20" />
@@ -119,7 +120,7 @@ export default async function HomePage({
           </div>
           <NailongCompanion pose={life.anniversaryMode ? "love" : "wave"} interactive className="hero-companion" />
         </div>
-      </section>
+      </section></BirthdaySurprise>
 
       {data.announcement && (
         <Card className="mt-4 flex items-start gap-3 border-amber-200 bg-amber-50/90 py-4">

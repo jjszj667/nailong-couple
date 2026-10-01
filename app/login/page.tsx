@@ -1,3 +1,4 @@
+import { BirthdaySurprise } from "@/components/birthday-surprise";
 import { NailongCompanion } from "@/components/nailong-companion";
 import { redirect } from "next/navigation";
 import { Heart } from "lucide-react";
@@ -17,14 +18,14 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   return (
     <main className="page-shell login-page flex min-h-screen items-center justify-center py-10">
       <section className="login-panel grid w-full max-w-5xl overflow-hidden rounded-[2.5rem] border border-line bg-milk shadow-[0_25px_80px_rgba(111,79,27,0.13)] md:grid-cols-[1.05fr_1fr]">
-        <div className="login-welcome relative flex min-h-72 flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[#fff3b8] to-[#f6c84c] p-8 text-center md:min-h-[38rem]">
+        <BirthdaySurprise compact><div className="login-welcome relative flex min-h-72 flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[#fff3b8] to-[#f6c84c] p-8 text-center md:min-h-[38rem]">
           <div className="absolute -left-16 top-8 size-48 rounded-full bg-white/25" />
           <div className="absolute -right-16 bottom-8 size-56 rounded-full bg-orange/15" />
           <p className="relative mb-4 text-xs font-bold tracking-[0.25em] text-brown/60">OUR LITTLE HAPPY PLACE</p>
           <NailongCompanion interactive className="login-companion" />
           <h1 className="relative mt-6 text-3xl font-black tracking-tight text-brown">JJ的快乐小屋</h1>
           <p className="relative mt-3 max-w-xs leading-7 text-brown/75">把认真吃饭的小日常，慢慢攒成一起去做的开心事。</p>
-        </div>
+        </div></BirthdaySurprise>
 
         <div className="flex flex-col justify-center p-6 sm:p-10">
           <div className="mb-8">

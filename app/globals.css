@@ -227,3 +227,40 @@ dialog[open] { animation: dialog-in .3s var(--ease-out); } dialog::backdrop { ba
 .nailong-art,.mood-character img { animation-iteration-count: 1; }
 .soft-card,.mood-composer,.mood-options { min-width: 0; }
 .mood-composer,.mood-options { width: 100%; }
+
+/* One-off birthday card. All decoration disappears with BirthdaySurprise. */
+.birthday-surprise { position: relative; isolation: isolate; display: grid; grid-template-columns: 1.15fr .85fr; align-items: center; overflow: hidden; min-height: 410px; padding: clamp(28px, 5vw, 64px); border: 1px solid #f4d7ce; border-radius: 2.25rem; background: radial-gradient(ellipse at 85% 20%, #fff6ce 0%, transparent 55%), linear-gradient(125deg, #fff7ed, #ffe1e3); color: #683e35; box-shadow: 0 20px 60px #a7584720; }
+.birthday-eyebrow { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 800; letter-spacing: .18em; color: #9d554e; }
+.birthday-copy { position: relative; z-index: 2; }
+.birthday-surprise h1 { margin-top: 20px; font-size: clamp(34px, 4.5vw, 58px); font-weight: 900; line-height: 1.24; letter-spacing: -.05em; }
+.birthday-surprise h1 span { color: #b64d60; }
+.birthday-note { margin-top: 20px; font-size: 14px; line-height: 2; color: #805b50; }
+.birthday-wish { display: inline-flex; align-items: center; justify-content: center; gap: 9px; margin-top: 25px; border-radius: 999px; padding: 14px 20px; background: #864550; color: #fffaf2; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 20px #86455020; }
+.birthday-wish:hover { background: #723944; }
+.birthday-wish:focus-visible { outline: 3px solid #864550; outline-offset: 4px; }
+.birthday-wish:disabled { cursor: default; }
+.birthday-response { min-height: 40px; margin-top: 13px; font-size: 12px; line-height: 1.7; color: #805b50; }
+.birthday-stars { position: absolute; right: 7%; top: 25px; color: #bd8650; letter-spacing: 18px; font-size: 24px; }
+.birthday-art { position: relative; width: 100%; max-width: 310px; height: 285px; justify-self: center; }
+.birthday-companion { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 240px; height: 240px; }
+.birthday-cake { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); width: 146px; height: 85px; border-radius: 15px 15px 25px 25px; border: 2px solid #ecad9f; background: repeating-linear-gradient(0deg, #eeb0a5 0 13px, #ffdec1 13px 32px); box-shadow: 0 12px 0 -5px #fff9ef, 0 16px 0 -6px #e6cbb0; }
+.birthday-icing { position: absolute; top: -3px; left: -2px; width: 146px; height: 24px; border-radius: 50% 50% 12px 12px; background: #fff9ed; border: 2px solid #efd3b5; }
+.birthday-candle { position: absolute; z-index: 1; top: -35px; left: 67px; height: 38px; width: 10px; border-radius: 4px; background: repeating-linear-gradient(45deg, #d9788c 0 5px, #fff3de 5px 10px); }
+.birthday-candle i { position: absolute; top: -20px; left: -1px; width: 12px; height: 18px; border-radius: 70% 30% 60% 40%; background: #efa936; box-shadow: 0 0 22px #edb643; animation: birthday-flicker 1.3s ease-in-out 5; }
+.birthday-wished .birthday-candle i { display: none; }
+.birthday-cake-heart { position: absolute; top: 33px; left: 59px; color: #ac4b5f; font-size: 25px; }
+.birthday-art-star { position: absolute; right: 0; top: 75px; font-size: 48px; color: #b68441; }
+.birthday-art-heart { position: absolute; left: 0; top: 125px; font-size: 42px; color: #bd7582; }
+.birthday-compact { display: flex; flex-direction: column; justify-content: center; border: 0; border-radius: 0; padding: 40px 28px 25px; text-align: center; }
+.birthday-compact .birthday-eyebrow { justify-content: center; }
+.birthday-compact h1 { font-size: 38px; }
+.birthday-compact .birthday-art { height: 220px; max-width: 260px; }
+.birthday-compact .birthday-companion { width: 190px; height: 190px; }
+@keyframes birthday-flicker { 50% { transform: rotate(8deg) scale(.9); } }
+@media (max-width: 640px) {
+  .birthday-surprise { grid-template-columns: 1fr; padding: 30px 24px 20px; }
+  .birthday-surprise:not(.birthday-compact) .birthday-art { height: 220px; max-width: 260px; }
+  .birthday-surprise:not(.birthday-compact) .birthday-companion { width: 190px; height: 190px; }
+  .birthday-stars { right: 0; font-size: 18px; }
+}
+@media (prefers-reduced-motion: reduce) { .birthday-candle i { animation: none; } }
