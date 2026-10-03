@@ -3,6 +3,7 @@ import { Noto_Sans_SC } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 import "./niwa.css";
+import "./mobile-motion.css";
 import { MotionEnvironment } from "@/components/motion/environment";
 
 const notoSans = Noto_Sans_SC({

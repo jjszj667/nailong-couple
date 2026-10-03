@@ -22,7 +22,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <div className="absolute -left-16 top-8 size-48 rounded-full bg-white/25" />
           <div className="absolute -right-16 bottom-8 size-56 rounded-full bg-orange/15" />
           <p className="relative mb-4 text-xs font-bold tracking-[0.25em] text-brown/60">OUR LITTLE HAPPY PLACE</p>
-          <NailongCompanion interactive className="login-companion" />
+          <NailongCompanion pose="dance" interactive autoplay priority className="login-companion" />
           <h1 className="relative mt-6 text-3xl font-black tracking-tight text-brown">JJ的快乐小屋</h1>
           <p className="relative mt-3 max-w-xs leading-7 text-brown/75">把认真吃饭的小日常，慢慢攒成一起去做的开心事。</p>
         </div></BirthdaySurprise>

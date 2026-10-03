@@ -42,7 +42,7 @@ export function BirthdaySurprise({ children, compact = false }: { children: Reac
         <p className="birthday-response" role="status">{wished ? "蜡烛吹灭啦，新的快乐正在向你赶来。♡" : "这一周，把偏爱都给你。"}</p>
       </div>
       <div className={`birthday-art ${wished ? "birthday-wished" : ""}`} aria-hidden="true">
-        <NailongCompanion pose="love" className="birthday-companion" />
+        <NailongCompanion pose="balloon" priority className="birthday-companion" />
         <div className="birthday-cake"><span className="birthday-candle"><i /></span><span className="birthday-icing" /><span className="birthday-cake-heart">♥</span></div>
         <span className="birthday-art-star">✧</span><span className="birthday-art-heart">♡</span>
       </div>

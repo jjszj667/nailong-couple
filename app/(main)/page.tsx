@@ -120,7 +120,7 @@ export default async function HomePage({
               </Link>
             </div>
           </div>
-          <NailongCompanion pose={life.anniversaryMode ? "love" : "wave"} interactive className="hero-companion" />
+          <NailongCompanion pose={life.anniversaryMode ? "balloon" : "dance"} interactive autoplay priority className="hero-companion" />
         </div>
       </section></BirthdaySurprise>
 

@@ -1,0 +1,74 @@
+/* Mobile-first companion stage. Visible without hover or ViewTransition support. */
+.nailong-mobile-art { background: none; border-radius: 0; }
+.nailong-mobile-art img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.nailong-art { position: relative; z-index: 1; }
+.nailong-figure { isolation: isolate; }
+.companion-accents { position: absolute; inset: 0; pointer-events: none; }
+.companion-spark,.companion-heart { position: absolute; width: 11%; height: 11%; opacity: .75; }
+.companion-spark { right: 4%; top: 14%; color: #d9a426; animation: mobile-spark 4.8s ease-in-out infinite; }
+.companion-heart { left: 4%; top: 38%; color: #e993a4; animation: mobile-heart 5.6s ease-in-out infinite; }
+.companion-ground { position: absolute; left: 24%; right: 24%; bottom: 4%; height: 6%; border-radius: 50%; background: #98733519; animation: mobile-shadow 4.8s ease-in-out infinite; }
+.nailong-art.nailong-dance { animation: mobile-dance 4.8s ease-in-out infinite; }
+.nailong-art.nailong-balloon { animation: mobile-float 5.4s ease-in-out infinite; }
+.nailong-art.nailong-raincoat { animation: mobile-sway 5.6s ease-in-out infinite; }
+.nailong-art.nailong-chef { animation: mobile-present 4.8s ease-in-out infinite; }
+.nailong-art.nailong-gardener { animation: mobile-sway 6s ease-in-out infinite; }
+.nailong-art.nailong-stargaze { animation: mobile-breathe 5.4s ease-in-out infinite; }
+.nailong-figure[data-awake="true"] .nailong-art,.nailong-play[data-awake="true"] .nailong-art { animation-play-state: running; }
+[data-awake="false"] .nailong-art,[data-awake="false"] .companion-accents > * { animation-play-state: paused !important; }
+.companion-pause { margin-top: 5px; padding: 6px 12px; border-radius: 99px; font-size: 11px; color: #756343; background: #ffffff73; min-height: 32px; cursor: pointer; }
+.companion-pause:focus-visible { outline: 2px solid #976600; outline-offset: 3px; }
+.nailong-caption { min-height: 36px; display: grid; place-items: center; }
+.companion-autoplay .nailong-caption { min-height: 54px; }
+.nailong-play .nailong-figure:active .nailong-art { scale: .92; transition: scale 140ms; }
+.motion-environment[data-paused="true"] * { animation-play-state: paused !important; }
+@keyframes mobile-dance { 0%,65%,100% { transform: none; } 16% { transform: translateY(-16px) rotate(-9deg) scale(1.04); } 32% { transform: translateY(-5px) rotate(8deg); } 46% { transform: translateY(-12px) rotate(-5deg); } }
+@keyframes mobile-float { 0%,100% { transform: translateY(0) rotate(-2deg); } 45% { transform: translateY(-16px) rotate(4deg); } }
+@keyframes mobile-sway { 0%,70%,100% { transform: none; } 24% { transform: rotate(-7deg) translateY(-5px); } 48% { transform: rotate(6deg) translateY(-7px); } }
+@keyframes mobile-present { 0%,65%,100% { transform: none; } 22% { transform: translateY(-12px) scale(1.05) rotate(-3deg); } 42% { transform: translateY(-4px) rotate(3deg); } }
+@keyframes mobile-breathe { 0%,100% { transform: scale(.97) rotate(-2deg); } 50% { transform: translateY(-8px) scale(1.03) rotate(2deg); } }
+@keyframes mobile-spark { 0%,70%,100% { opacity: .35; transform: scale(.75) rotate(0); } 30% { opacity: .9; transform: scale(1.3) rotate(45deg); } }
+@keyframes mobile-heart { 0%,100% { opacity: .3; transform: translateY(7px) scale(.8); } 50% { opacity: .85; transform: translateY(-12px) scale(1.1) rotate(-12deg); } }
+@keyframes mobile-shadow { 0%,100% { transform: scaleX(1); opacity: .7; } 35% { transform: scaleX(.8); opacity: .35; } }
+@keyframes mobile-arrival { from { opacity: .35; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+@keyframes mobile-nav-hop { 0%,55%,100% { transform: none; } 18% { transform: translateY(-5px) rotate(-9deg) scale(1.15); } 36% { transform: translateY(-2px) rotate(6deg); } }
+@keyframes mobile-mood-breathe { 0%,100% { transform: rotate(-2deg) scale(.98); } 50% { transform: translateY(-7px) rotate(3deg) scale(1.03); } }
+@media (max-width:767px) {
+  .page-motion { animation: mobile-arrival 520ms var(--motion-enter) both; }
+  .feature-hero { grid-template-columns: minmax(0,1fr) 136px; gap: 12px; min-height: 210px; padding: 24px 20px; }
+  .feature-hero-copy { min-width: 0; position: relative; z-index: 2; }
+  .feature-hero-scene { width: 136px; height: 160px; overflow: visible; }
+  .feature-character { width: 138px; }
+  .feature-caption { display: block; font-size: 11px; line-height: 1.8; margin-top: 12px; }
+  .mood-character img { animation: mobile-mood-breathe 4.8s ease-in-out infinite; }
+  .page-motion .mood-character img { animation-play-state: paused; }
+  .motion-in-view .mood-character img { animation-play-state: running; }
+  .mobile-nav a[aria-current="page"] > svg { animation: mobile-nav-hop 5s ease-in-out 2; }
+  .mobile-nav a:active > svg { scale: 1.2; }
+  .mobile-nav a:active { background: #ffe8a180; }
+  .pill-button:active,.submit-button:active { scale: .95; }
+  .birthday-art { animation: mobile-arrival 720ms var(--motion-spring) both; }
+  .birthday-art-star { animation: mobile-spark 5s ease-in-out 2; }
+  .birthday-art-heart { animation: mobile-heart 5.6s ease-in-out 2; }
+  .birthday-surprise:not(.birthday-compact) .birthday-art { order: -1; height: 245px; }
+  .birthday-surprise:not(.birthday-compact) .birthday-companion { width: 210px; height: 210px; }
+  .birthday-compact .birthday-art { order: -1; height: 215px; margin-bottom: 8px; }
+  .birthday-compact .birthday-companion { width: 200px; height: 200px; }
+  .birthday-art .birthday-cake { width: 100px; height: 60px; right: 0; left: auto; bottom: 0; transform: none; }
+  .birthday-art .birthday-icing { width: 100px; height: 18px; }
+  .birthday-art .birthday-candle { left: 46px; top: -26px; height: 28px; }
+  .birthday-art .birthday-cake-heart { top: 24px; left: 38px; font-size: 20px; }
+}
+@media (max-width:479px) {
+  .home-hero .hero-companion { order: -1; width: 220px; }
+  .home-hero > .relative.grid { gap: 18px; }
+  .feature-hero { grid-template-columns: minmax(0,1fr) 118px; padding: 22px 16px; }
+  .feature-hero h1 { font-size: 25px; }
+  .feature-hero-scene { width: 118px; height: 145px; }
+  .feature-character { width: 120px; }
+  .feature-caption { display: block; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .nailong-art,.companion-accents > *,.page-motion,.birthday-art,.birthday-art-star,.birthday-art-heart,.mobile-nav a > svg,.mood-character img { animation: none !important; transform: none; }
+  .companion-ground { opacity: .5; }
+}

@@ -13,6 +13,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { RewardFeedback } from "@/components/motion/reward-feedback";
 import { AnniversaryMoment } from "@/components/anniversary-moment";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
+import { MobileCompanionGallery } from "@/components/motion/mobile-companion-gallery";
 
 /** Development-only fixtures: no user data and no simulated database writes. */
 export function DesignLab() {
@@ -24,6 +25,7 @@ export function DesignLab() {
   const previousMonth = new Date(Date.UTC(year, month - 2, 1)).toISOString().slice(0, 7);
   const nextMonth = new Date(Date.UTC(year, month, 1)).toISOString().slice(0, 7);
   return <div onSubmitCapture={(event) => event.preventDefault()} className="space-y-8">
+    <MobileCompanionGallery />
     <div className="grid gap-6 lg:grid-cols-2"><Card id="mood"><h2 className="mb-4 text-xl font-black">今天，感觉怎么样？</h2><MoodSelector date="2026-10-03" /></Card><Card><FeatureHero feature="checkin"><h1>记录一餐小幸福</h1></FeatureHero><ImagePicker /><div className="mt-4 flex flex-wrap gap-2"><button type="button" className="pill-button" onClick={() => { setReward("normal"); setVersion(version + 1); setBalance(balance + 10); }}>预览准时签到反馈</button><button type="button" className="pill-button bg-stone-100" onClick={() => { setReward("makeup"); setVersion(version + 1); setBalance(balance + 5); }}>预览补签反馈</button></div><p className="mt-3 text-xs text-muted">仅动画演示，不写入真实签到和余额</p></Card></div>
     <div data-wallet-target className="flex justify-end"><Coin value={balance} className="text-2xl" /></div>
     {reward && <RewardFeedback key={version} kind={reward} amount={reward === "normal" ? 10 : reward === "makeup" ? 5 : undefined} />}
