@@ -140,6 +140,7 @@ export async function submitCheckinAction(formData: FormData) {
   let uploadedPath: string | null = null;
   let isMakeup = false;
   let reward = 0;
+  let totalReward = 0;
   try {
     const checkinType = type as CheckinType;
     const window = getCheckinWindow(checkinType);
@@ -173,6 +174,7 @@ export async function submitCheckinAction(formData: FormData) {
     });
     if (error) throw error;
     reward = Number((data as { meal_reward?: number } | null)?.meal_reward ?? 0);
+    totalReward = Number((data as { reward?: number } | null)?.reward ?? 0);
   } catch (error) {
     if (uploadedPath) {
       const supabase = await createClient();
@@ -184,7 +186,7 @@ export async function submitCheckinAction(formData: FormData) {
   revalidatePath("/checkin");
   redirect(
     target(
-      "/checkin",
+      `/checkin?feedback=${isMakeup ? "makeup" : "normal"}&earned=${totalReward}&receipt=${requestId.data}`,
       "ok",
       isMakeup
         ? `补签成功，本次获得 ${reward} 枚奶龙币。补签不算有效签到。`

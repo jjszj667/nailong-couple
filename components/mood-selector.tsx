@@ -21,11 +21,15 @@ export function MoodSelector({ date, mood, returnTo = "/" }: { date: string; moo
   const [tags, setTags] = useState<string[]>(mood?.tags ?? []);
   const index = MOODS.findIndex((item) => item.value === value);
   const current = MOODS[index];
+  function selectMood(next: typeof value) {
+    setValue(next);
+    window.dispatchEvent(new CustomEvent("niwa:mood", { detail: MOODS.find((item) => item.value === next)?.color }));
+  }
   function onKey(event: KeyboardEvent<HTMLButtonElement>, i: number) {
     const next = event.key === "Home" ? 0 : event.key === "End" ? 6 : ["ArrowRight", "ArrowDown"].includes(event.key) ? (i + 1) % 7 : ["ArrowLeft", "ArrowUp"].includes(event.key) ? (i + 6) % 7 : -1;
     if (next < 0) return;
     event.preventDefault();
-    setValue(MOODS[next].value);
+    selectMood(MOODS[next].value);
     (event.currentTarget.parentElement?.children[next] as HTMLButtonElement)?.focus();
   }
   return <form action={saveMoodAction} className="mood-composer" style={{ "--mood-color": current.color } as CSSProperties}>
@@ -36,7 +40,7 @@ export function MoodSelector({ date, mood, returnTo = "/" }: { date: string; moo
       <div className="mood-stage-copy" aria-live="polite"><span className="eyebrow">HOW ARE YOU, REALLY?</span><p className="mood-current-label">{current.label}</p><p>{messages[index]}</p></div>
     </div>
     <div className="mood-options" role="radiogroup" aria-label="今天的心情">
-      {MOODS.map((item, i) => <button key={item.value} type="button" role="radio" aria-checked={value === item.value} tabIndex={value === item.value ? 0 : -1} onClick={() => setValue(item.value)} onKeyDown={(event) => onKey(event, i)} className={cn("mood-option", value === item.value && "is-selected")}>
+      {MOODS.map((item, i) => <button key={item.value} type="button" role="radio" aria-checked={value === item.value} tabIndex={value === item.value ? 0 : -1} onClick={() => selectMood(item.value)} onKeyDown={(event) => onKey(event, i)} className={cn("mood-option", value === item.value && "is-selected")}>
         <MoodIcon image={item.image} label={item.label} className="mood-option-icon" sizes="64px" /><span>{item.label}</span><span className="mood-option-dot" aria-hidden="true" />
       </button>)}
     </div>

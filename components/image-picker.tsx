@@ -27,7 +27,7 @@ export function ImagePicker({ name = "image", label = "选择一张照片", requ
   }, [processing]);
 
   return (
-    <label className="upload-zone group block cursor-pointer rounded-3xl border-2 border-dashed border-line bg-white/70 p-3 text-center transition hover:border-nailong-deep">
+    <label data-processing={processing} data-ready={Boolean(preview)} aria-busy={processing} className="upload-zone group block cursor-pointer rounded-3xl border-2 border-dashed border-line bg-white/70 p-3 text-center transition hover:border-nailong-deep">
       {preview ? (
         <MediaImage src={preview} alt="待上传照片预览" className="aspect-[4/3] w-full rounded-2xl" />
       ) : (

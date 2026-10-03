@@ -10,6 +10,7 @@ import { Flash } from "@/components/ui/flash";
 import { MediaImage } from "@/components/ui/media-image";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { ImagePicker } from "@/components/image-picker";
+import { EmptyState } from "@/components/ui/empty-state";
 import { getCheckinWindow } from "@/lib/checkin-windows";
 import { makeupReward, completedByNormal } from "@/lib/checkin-rules";
 import { dateInShanghai } from "@/lib/life";
@@ -17,7 +18,7 @@ import { formatDate } from "@/lib/utils";
 
 export const metadata = { title: "签到情况" };
 
-export default async function CheckinPage({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string }> }) {
+export default async function CheckinPage({ searchParams }: { searchParams: Promise<{ ok?: string; error?: string; feedback?: string; earned?: string; receipt?: string }> }) {
   const [{ profile }, flash] = await Promise.all([requireUser(), searchParams]);
 
   if (profile.role === "admin") {
@@ -57,11 +58,7 @@ export default async function CheckinPage({ searchParams }: { searchParams: Prom
         <Flash {...flash} />
 
         {!data.partner ? (
-          <Card className="py-14 text-center">
-            <Camera className="mx-auto size-9 text-nailong-deep" />
-            <p className="mt-3 font-bold text-brown">还没有找到对方账户</p>
-            <p className="mt-1 text-sm text-muted">请先在管理设置中配置关系双方。</p>
-          </Card>
+          <EmptyState icon={Camera} title="还没有找到对方账户" description="请先在管理设置中配置关系双方。" />
         ) : (
           <>
             <section className="mb-6 grid gap-3 sm:grid-cols-3">
@@ -151,7 +148,7 @@ export default async function CheckinPage({ searchParams }: { searchParams: Prom
                   ))}
                 </div>
               ) : (
-                <Card className="py-12 text-center text-sm text-muted">还没有更早的签到照片。</Card>
+                <EmptyState icon={Camera} title="还没有更早的签到照片" description="每一餐留下的记录，都会慢慢出现在这里。" />
               )}
             </section>
           </>
@@ -175,6 +172,7 @@ export default async function CheckinPage({ searchParams }: { searchParams: Prom
   return (
     <main data-feature="checkin" className="page-shell feature-page py-7 sm:py-10">
       <FeatureHero feature="checkin"><p className="text-xs font-bold uppercase tracking-wider text-nailong-deep">Daily check-in</p><h1 className="mt-1 text-3xl font-black tracking-tight text-brown">每天限时签到</h1><p className="mt-2 text-sm leading-6 text-muted">午间 11:00–14:00、晚间 16:00–22:00 为准时签到。只要一餐准时，今日就算完成；补签不算有效签到。</p></FeatureHero>
+      <div data-wallet-target className="mb-5 flex items-center justify-end gap-2 text-sm text-muted">可用奶龙币 <Coin value={data.wallet?.available_balance ?? 0} /></div>
       <Flash {...flash} />
 
       <section className="mb-6 grid gap-3 sm:grid-cols-3">
@@ -244,7 +242,7 @@ export default async function CheckinPage({ searchParams }: { searchParams: Prom
               <p className="mt-1 text-xs text-muted">连续缺卡 {item.consecutive_missed} 天；{item.planned_deduction ? `应扣 ${item.planned_deduction} 枚，实际扣 ${item.actual_deduction} 枚` : "本日不扣币"}</p></div>
             <span className={item.actual_deduction ? "font-bold text-orange" : "text-muted"}>{item.actual_deduction ? `−${item.actual_deduction}` : "0"}</span>
           </div>)}
-        </Card> : <Card className="text-sm text-muted">还没有已结算的日期。每天晚间签到窗口结束后会结算。</Card>}
+        </Card> : <EmptyState title="还没有已结算的日期" description="每天晚间签到窗口结束后会结算。" size="sm" />}
       </section>
       <section className="mt-8">
         <h2 className="mb-3 text-xl font-black text-brown">最近签到与补签</h2>
@@ -254,7 +252,7 @@ export default async function CheckinPage({ searchParams }: { searchParams: Prom
               <span className="font-semibold text-brown">{formatDate(item.checkin_date)} · {item.type === "lunch" ? "午间" : "晚间"} · {item.checkin_kind === "normal" ? "准时签到" : "补签"}</span>
               <span className="font-bold text-nailong-deep">+{item.reward_amount} 枚</span>
             </div>) }
-          {!data.checkins.length && <p className="p-3 text-sm text-muted">还没有签到记录。</p>}
+          {!data.checkins.length && <EmptyState icon={Camera} title="第一餐，等你来记录" description="准时签到和补签都会保留，奖励以实际流水为准。" size="sm" />}
         </Card>
       </section>
     </main>

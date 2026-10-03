@@ -31,7 +31,7 @@ export function MultiImagePicker() {
   }, [processing]);
 
   return (
-    <label className="upload-zone block cursor-pointer rounded-3xl border-2 border-dashed border-line bg-white/70 p-3 transition hover:border-nailong-deep">
+    <label data-processing={processing} data-ready={Boolean(previews.length)} aria-busy={processing} className="upload-zone block cursor-pointer rounded-3xl border-2 border-dashed border-line bg-white/70 p-3 transition hover:border-nailong-deep">
       {previews.length ? (
         <span className="grid grid-cols-3 gap-2">
           {previews.map((preview, index) => (

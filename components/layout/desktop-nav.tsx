@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Boxes, CalendarDays, Camera, Home, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ViewTransition } from "react";
 
 export function DesktopNav({ admin }: { admin: boolean }) {
   const pathname = usePathname();
@@ -15,6 +16,6 @@ export function DesktopNav({ admin }: { admin: boolean }) {
   ];
   return <nav className="desktop-nav hidden items-center gap-1 md:flex" aria-label="桌面导航">{items.map(({ href, label, icon: Icon }) => {
     const active = href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
-    return <Link key={href} href={href} aria-current={active ? "page" : undefined} className={cn("desktop-nav-link", active && "is-active")}><Icon className="size-4" />{label}</Link>;
+    return <Link key={href} href={href} transitionTypes={["nav-forward"]} aria-current={active ? "page" : undefined} className={cn("desktop-nav-link", active && "is-active")}>{active && <ViewTransition name="desktop-active-tab" share="niwa-morph" default="none"><span className="nav-indicator" /></ViewTransition>}<Icon className="size-4" />{label}</Link>;
   })}</nav>;
 }

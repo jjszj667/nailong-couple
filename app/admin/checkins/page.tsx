@@ -2,6 +2,7 @@ import { Camera } from "lucide-react";
 import { getAdminPartnerCheckinData } from "@/lib/data";
 import { formatDate } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { MediaImage } from "@/components/ui/media-image";
 import { StatusBadge } from "@/components/ui/status-badge";
 
@@ -52,10 +53,7 @@ export default async function AdminCheckinsPage() {
           ))}
         </section>
       ) : (
-        <Card className="py-14 text-center">
-          <Camera className="mx-auto size-9 text-nailong-deep" />
-          <p className="mt-3 text-sm text-muted">还没有签到照片。</p>
-        </Card>
+        <EmptyState icon={Camera} title="还没有签到照片" description="好好记录的一餐，会在这里留下生活的颜色。" />
       )}
     </div>
   );

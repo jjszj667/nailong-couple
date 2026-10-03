@@ -1,6 +1,7 @@
 import { saveReleaseAction } from "@/app/actions";
 import { getAdminReleases } from "@/lib/data";
 import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Flash } from "@/components/ui/flash";
 import { SubmitButton } from "@/components/ui/submit-button";
 import type { ReleaseAnnouncement } from "@/types/database";
@@ -47,7 +48,7 @@ export default async function AdminReleasesPage({ searchParams }: { searchParams
     <Flash {...flash} />
     <Card className="mt-5"><h3 className="font-black text-brown">创建新版本</h3><ReleaseForm /></Card>
     <div className="mt-6 space-y-4">
-      {items.map((item) => <Card key={item.id}>
+      {!items.length && <EmptyState title="新变化，等你写下" description="发布第一条版本公告后，用户就能看到小屋的新故事。" />}{items.map((item) => <Card key={item.id}>
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="font-black text-brown">v{item.version} · {item.title}</h3>
           <span className="rounded-full bg-amber-100 px-2 py-1 text-xs text-nailong-deep">{statuses.find(([value]) => value === item.status)?.[1]}</span>

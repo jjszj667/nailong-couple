@@ -1,6 +1,8 @@
 import { BirthdaySurprise } from "@/components/birthday-surprise";
 import { NailongCompanion } from "@/components/nailong-companion";
 import { HomeExplore } from "@/components/home-explore";
+import { LifeStory } from "@/components/motion/life-story";
+import { AnimatedNumber } from "@/components/motion/animated-number";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -110,7 +112,7 @@ export default async function HomePage({
                 {isAdmin ? (
                   <>她今日已签 <strong className="ml-1 text-lg">{partnerCompletedMeals} / 2</strong></>
                 ) : (
-                  <>当前奶龙币 <strong className="ml-1 text-lg">{total}</strong></>
+                  <>当前奶龙币 <strong data-wallet-target className="ml-1 text-lg"><AnimatedNumber value={total} /></strong></>
                 )}
               </span>
               <Link href="/checkin" className="pill-button bg-white">
@@ -149,7 +151,7 @@ export default async function HomePage({
           {life.relationshipDays ? (
             <>
               <h2 className="mt-2 text-2xl font-black">
-                我们已经一起走过 {life.relationshipDays} 天啦
+                我们已经一起走过 <AnimatedNumber value={life.relationshipDays} /> 天啦
               </h2>
               <p className="mt-2 text-sm text-brown/65">
                 {life.relationship?.title}的第 {life.relationshipDays} 天
@@ -645,6 +647,7 @@ export default async function HomePage({
           </Card>}
         </div>
       </section>
+      <LifeStory />
     </main>
   );
 }

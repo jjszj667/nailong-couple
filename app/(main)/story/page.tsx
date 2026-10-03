@@ -6,6 +6,7 @@ import { formatDate } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { MediaImage } from "@/components/ui/media-image";
 import { EmptyState } from "@/components/ui/empty-state";
+import { AnniversaryMoment } from "@/components/anniversary-moment";
 
 export const metadata = { title: "我们的故事" };
 
@@ -29,6 +30,7 @@ export default async function StoryPage() {
           </p>
         </div>
       </FeatureHero>
+      {data.relationshipDays !== null && <AnniversaryMoment title="我们的故事，已经走过" days={data.relationshipDays} />}
 
       {data.events.length ? (
         <section className="relative mx-auto mt-8 max-w-2xl pl-10 sm:pl-14">

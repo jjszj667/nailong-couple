@@ -11,6 +11,7 @@ import { MediaImage } from "@/components/ui/media-image";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Flash } from "@/components/ui/flash";
 import { EmptyState } from "@/components/ui/empty-state";
+import { SharedVisual } from "@/components/motion/route-transition";
 
 export const metadata = { title: "奖励商城" };
 
@@ -42,25 +43,26 @@ export default async function ShopPage({
       </FeatureHero>
       <Flash error={flash.error} />
       {data.products.length ? (
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <section className="shop-grid grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {data.products.map((product) => {
             const short = Math.max(0, product.price - balance);
             return (
               <Link
                 href={`/shop/${product.id}`}
+                transitionTypes={["nav-forward"]}
                 key={product.id}
                 className="group"
               >
-                <Card className="h-full overflow-hidden p-3 transition duration-200 group-hover:-translate-y-1 group-hover:shadow-xl">
+                <Card className="shop-product h-full overflow-hidden p-3">
                   <div className="relative">
-                    <MediaImage
+                    <SharedVisual name={`product-${product.id}`}><MediaImage
                       src={getPublicImageUrl(
                         "product-images",
                         product.image_url,
                       )}
                       alt={product.name}
                       className="aspect-[4/3] w-full rounded-[1.35rem]"
-                    />
+                    /></SharedVisual>
                     {product.is_featured && (
                       <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-xs font-bold text-orange shadow-sm">
                         推荐
@@ -94,7 +96,7 @@ export default async function ShopPage({
                             : `还差 ${short} 奶龙币`}
                         </p>
                       </div>
-                      <span className="flex size-10 items-center justify-center rounded-full bg-amber-100 text-nailong-deep">
+                      <span className="shop-arrow flex size-10 items-center justify-center rounded-full bg-amber-100 text-nailong-deep">
                         <ArrowRight className="size-4" />
                       </span>
                     </div>

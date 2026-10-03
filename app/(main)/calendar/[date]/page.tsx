@@ -33,6 +33,8 @@ import { MultiImagePicker } from "@/components/multi-image-picker";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { SharedVisual } from "@/components/motion/route-transition";
+import { AnniversaryMoment } from "@/components/anniversary-moment";
 
 const categoryLabels: Record<string, string> = {
   daily: "生活",
@@ -79,6 +81,7 @@ export default async function DayDetailPage({
     <main className="page-shell max-w-5xl py-6 sm:py-10">
       <Link
         href={`/calendar?month=${date.slice(0, 7)}`}
+        transitionTypes={["nav-back"]}
         className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-muted"
       >
         <ArrowLeft className="size-4" /> 返回日历
@@ -88,9 +91,9 @@ export default async function DayDetailPage({
       <header className="relative mb-6 overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-amber-200 via-nailong to-orange-200 p-6 sm:p-9">
         <div className="absolute -right-8 -top-10 size-40 rounded-full bg-white/25" />
         <p className="relative text-xs font-bold text-brown/60">DAY DETAIL</p>
-        <h1 className="relative mt-2 text-3xl font-black text-brown">
+        <SharedVisual name={`calendar-date-${date}`}><h1 className="relative mt-2 text-3xl font-black text-brown">
           {formatDate(date)}
-        </h1>
+        </h1></SharedVisual>
         <p className="relative mt-1 text-sm font-bold text-brown/65">
           {weekday} · 这一天的回忆卡片
         </p>
@@ -107,6 +110,7 @@ export default async function DayDetailPage({
           </div>
         )}
       </header>
+      {data.events.filter((event) => event.event_type === "anniversary" || event.event_type === "birthday").map((event) => <div key={`moment-${event.id}`} className="mb-6"><AnniversaryMoment title={eventDisplayTitle(event, date)} days={Math.floor((Date.parse(`${today}T12:00:00+08:00`) - Date.parse(`${event.event_date}T12:00:00+08:00`)) / 86400000)} today={date === today} /></div>)}
 
       {!hasDayContent && (
         <EmptyState className="mb-6" icon={CalendarHeart} title="这一天还没有留下记录。" description="以后想起来，也可以回来补上一点。" variant="quiet" />

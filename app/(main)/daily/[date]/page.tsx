@@ -14,6 +14,8 @@ import { getDailyReport } from "@/lib/life-data";
 import { moodMeta } from "@/lib/life";
 import { formatDate } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { AnimatedNumber } from "@/components/motion/animated-number";
 import { MediaImage } from "@/components/ui/media-image";
 import { MoodIcon } from "@/components/mood-icon";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -71,7 +73,7 @@ export default async function DailyReportPage({
               <Coins className="size-5 text-green-700" />
               <p className="mt-3 text-xs text-muted">今日获得</p>
               <p className="mt-1 font-black text-green-700">
-                +{report.income} 奶龙币
+                +<AnimatedNumber value={report.income} /> 奶龙币
               </p>
             </div>
           </div>
@@ -89,7 +91,7 @@ export default async function DailyReportPage({
                   <p className="mt-1 font-black text-brown">
                     {checkin
                       ? checkin.checkin_kind === "makeup"
-                        ? "补签完成 · +1"
+                        ? `补签完成 · +${checkin.reward_amount}`
                         : "正常完成 ✓"
                       : "未记录"}
                   </p>
@@ -180,13 +182,7 @@ export default async function DailyReportPage({
             report.events.length === 0 &&
             report.orders.length === 0 &&
             report.wishes.length === 0 && (
-              <div className="py-10 text-center">
-                <p className="text-4xl">🌙</p>
-                <h2 className="mt-3 font-black text-brown">这一天还很安静</h2>
-                <p className="mt-1 text-sm text-muted">
-                  以后留下的生活片段会自动聚合到这里。
-                </p>
-              </div>
+              <EmptyState title="这一天还很安静" description="以后留下的生活片段会自动聚合到这里。" variant="quiet" />
             )}
         </div>
       </Card>

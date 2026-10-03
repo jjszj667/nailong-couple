@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Boxes, CalendarDays, Camera, Home, ShoppingBag, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Profile } from "@/types/database";
+import { ViewTransition } from "react";
 
 const userItems = [
   { href: "/", label: "首页", icon: Home },
@@ -31,7 +32,8 @@ export function MobileNav({ profile }: { profile: Profile }) {
         {items.map(({ href, label, icon: Icon }) => {
           const active = href === "/" ? pathname === "/" : (pathname === href || pathname.startsWith(`${href}/`));
           return (
-            <Link key={href} href={href} aria-current={active ? "page" : undefined} className={cn("flex min-h-12 flex-col items-center justify-center gap-1 rounded-2xl text-[11px] font-medium text-muted", active && "bg-amber-100/80 text-brown")}>
+            <Link key={href} href={href} transitionTypes={["nav-forward"]} aria-current={active ? "page" : undefined} className={cn("flex min-h-12 flex-col items-center justify-center gap-1 rounded-2xl text-[11px] font-medium text-muted", active && "text-brown")}>
+              {active && <ViewTransition name="mobile-active-tab" share="niwa-morph" default="none"><span className="nav-indicator" /></ViewTransition>}
               <Icon className={cn("size-5", active && "text-nailong-deep")} strokeWidth={active ? 2.6 : 2} />
               {label}
             </Link>

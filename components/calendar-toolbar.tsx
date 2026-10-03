@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { saveCalendarEventAction } from "@/app/actions";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { AnimatedDialog, closeAnimatedDialog } from "@/components/ui/animated-dialog";
 
 type CalendarToolbarProps = {
   year: number;
@@ -25,7 +26,7 @@ type CalendarToolbarProps = {
 };
 
 function closeDialog(ref: React.RefObject<HTMLDialogElement | null>) {
-  ref.current?.close();
+  void closeAnimatedDialog(ref.current);
 }
 
 export function CalendarToolbar({
@@ -51,7 +52,7 @@ export function CalendarToolbar({
   function jumpToMonth() {
     const targetMonth = `${jumpYear}-${String(jumpMonth).padStart(2, "0")}`;
     closeDialog(jumpDialog);
-    router.push(`/calendar?month=${targetMonth}`);
+    router.push(`/calendar?month=${targetMonth}`, { transitionTypes: [targetMonth >= `${year}-${String(month).padStart(2, "0")}` ? "month-next" : "month-prev"] });
   }
 
   return (
@@ -60,6 +61,7 @@ export function CalendarToolbar({
         <div className="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2">
           <Link
             href={`/calendar?month=${previousMonth}`}
+            transitionTypes={["month-prev"]}
             className="flex size-11 items-center justify-center rounded-full bg-amber-50 text-brown transition hover:bg-amber-100"
             aria-label="上个月"
           >
@@ -76,6 +78,7 @@ export function CalendarToolbar({
           </button>
           <Link
             href={`/calendar?month=${nextMonth}`}
+            transitionTypes={["month-next"]}
             className="flex size-11 items-center justify-center rounded-full bg-amber-50 text-brown transition hover:bg-amber-100"
             aria-label="下个月"
           >
@@ -99,12 +102,10 @@ export function CalendarToolbar({
         </div>
       </div>
 
-      <dialog
+      <AnimatedDialog
         ref={jumpDialog}
         className="m-auto w-[calc(100%_-_1.25rem)] max-w-md rounded-[1.75rem] border border-line bg-milk p-0 text-brown shadow-2xl backdrop:bg-brown/35"
-        onClick={(event) => {
-          if (event.target === event.currentTarget) closeDialog(jumpDialog);
-        }}
+        aria-label="快速跳转日期"
       >
         <div className="p-5 sm:p-6">
           <div className="flex items-start justify-between gap-3">
@@ -151,14 +152,12 @@ export function CalendarToolbar({
             跳转到 {jumpYear} 年 {jumpMonth} 月
           </button>
         </div>
-      </dialog>
+      </AnimatedDialog>
 
-      <dialog
+      <AnimatedDialog
         ref={eventDialog}
         className="m-auto max-h-[calc(100dvh_-_1.25rem)] w-[calc(100%_-_1.25rem)] max-w-lg overflow-y-auto rounded-[1.75rem] border border-line bg-milk p-0 text-brown shadow-2xl backdrop:bg-brown/35"
-        onClick={(event) => {
-          if (event.target === event.currentTarget) closeDialog(eventDialog);
-        }}
+        aria-label="添加纪念日"
       >
         <div className="p-5 sm:p-6">
           <div className="flex items-start justify-between gap-3">
@@ -244,7 +243,7 @@ export function CalendarToolbar({
             </SubmitButton>
           </form>
         </div>
-      </dialog>
+      </AnimatedDialog>
     </>
   );
 }

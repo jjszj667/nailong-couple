@@ -10,6 +10,7 @@ import { formatDate } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Coin } from "@/components/ui/coin";
 import { EmptyState } from "@/components/ui/empty-state";
+import { AnimatedNumber } from "@/components/motion/animated-number";
 
 export const metadata = { title: "奶龙币钱包" };
 
@@ -30,7 +31,7 @@ export default async function WalletPage() {
         <Card className="bg-brown text-white sm:col-span-3">
           <p className="text-sm text-white/65">总奶龙币</p>
           <p className="mt-2 text-4xl font-black">
-            {(wallet?.available_balance ?? 0) + (wallet?.frozen_balance ?? 0)}
+            <AnimatedNumber value={(wallet?.available_balance ?? 0) + (wallet?.frozen_balance ?? 0)} />
           </p>
         </Card>
         <Card>
@@ -44,7 +45,7 @@ export default async function WalletPage() {
           <p className="text-xs text-muted">冻结余额</p>
           <p className="mt-2 flex items-center gap-2 text-2xl font-black text-brown">
             <Snowflake className="size-5 text-sky-500" />
-            {wallet?.frozen_balance ?? 0}
+            <AnimatedNumber value={wallet?.frozen_balance ?? 0} />
           </p>
         </Card>
         <Card>

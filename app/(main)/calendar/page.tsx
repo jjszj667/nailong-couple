@@ -31,6 +31,8 @@ import { MoodSelector } from "@/components/mood-selector";
 import { MoodTrend } from "@/components/mood-trend";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { CalendarToolbar } from "@/components/calendar-toolbar";
+import { CalendarMotion } from "@/components/motion/calendar-motion";
+import { SharedVisual } from "@/components/motion/route-transition";
 
 export const metadata = { title: "我们的日历" };
 
@@ -131,6 +133,7 @@ export default async function CalendarPage({
       <div className="grid gap-6 xl:grid-cols-[1.15fr_.85fr]">
         <Card className="min-w-0 overflow-hidden p-3 sm:p-6">
           <CalendarToolbar
+            key={data.bounds.month}
             year={data.bounds.year}
             month={data.bounds.monthNumber}
             previousMonth={data.bounds.previous}
@@ -145,7 +148,7 @@ export default async function CalendarPage({
               </div>
             ))}
           </div>
-          <div className="calendar-grid grid grid-cols-7 gap-1 sm:gap-2">
+          <CalendarMotion month={data.bounds.month} previousMonth={data.bounds.previous} nextMonth={data.bounds.next}><div className="calendar-grid grid grid-cols-7 gap-1 sm:gap-2">
             {cells.map((date, index) =>
               date ? (
                 (() => {
@@ -161,13 +164,15 @@ export default async function CalendarPage({
                     <Link
                       key={date}
                       href={`/calendar/${date}`}
+                      data-calendar-day={date}
+                      transitionTypes={["nav-forward"]}
                       className={`relative min-h-20 min-w-0 rounded-2xl border p-1.5 transition sm:min-h-24 sm:p-2 ${selected ? "border-amber-400 bg-amber-100" : date === today ? "border-amber-300 bg-amber-50" : "border-line/70 bg-white hover:bg-amber-50"}`}
                     >
-                      <span
+                      <SharedVisual name={`calendar-date-${date}`}><span
                         className={`flex size-6 items-center justify-center rounded-full text-xs font-bold ${date === today ? "bg-nailong text-brown" : "text-muted"}`}
                       >
                         {Number(date.slice(-2))}
-                      </span>
+                      </span></SharedVisual>
                       <div className="mt-1 flex flex-wrap items-center gap-1">
                         {dayMoods.slice(0, 2).map((mood) => {
                           const owner = data.members.find(
@@ -205,7 +210,7 @@ export default async function CalendarPage({
                 <div key={`blank-${index}`} />
               ),
             )}
-          </div>
+          </div></CalendarMotion>
           <div className="mt-5 flex flex-wrap gap-4 text-xs text-muted">
             <span className="flex items-center gap-1">
               <MoodIcon
@@ -262,7 +267,7 @@ export default async function CalendarPage({
                         <p className="mt-1 text-xs text-muted">
                           {item
                             ? item.checkin_kind === "makeup"
-                              ? "已补签 · +1"
+                              ? `已补签 · +${item.reward_amount}`
                               : "正常签到 ✓"
                             : "未记录"}
                         </p>

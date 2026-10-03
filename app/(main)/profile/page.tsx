@@ -197,7 +197,7 @@ export default async function ProfilePage({
               <h2 className="mb-3 px-1 text-sm font-black text-brown">
                 {group.title}
               </h2>
-              <Card className="divide-y divide-line p-2">
+              <Card className="profile-menu divide-y divide-line p-2">
                 {group.items.map(({ href, label, hint, icon: Icon }) => (
                   <Link
                     href={href === "/daily/today" ? `/daily/${today}` : href}

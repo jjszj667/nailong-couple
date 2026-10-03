@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { NailongCompanion, type NailongPose } from "@/components/nailong-companion";
+import { NiwaMotif } from "@/components/ui/niwa-motif";
 
 export const featureScenes = {
   checkin: { pose: "meal", tone: "honey", caption: "每一餐，都值得认真对待。" },
@@ -22,6 +23,6 @@ export function FeatureHero({ feature, children }: { feature: FeatureName; child
   const scene = featureScenes[feature];
   return <section className={`feature-hero tone-${scene.tone}`} data-feature={feature}>
     <div className="feature-hero-copy">{children}<span className="feature-caption">{scene.caption}</span></div>
-    <div className="feature-hero-scene" aria-hidden="true"><span className="scene-orbit" /><NailongCompanion pose={scene.pose} className="feature-character" /><span className="scene-spark scene-spark-one">✦</span><span className="scene-spark scene-spark-two">✧</span></div>
+    <div className="feature-hero-scene" aria-hidden="true"><span className="scene-orbit" /><NiwaMotif kind="orbit" className="scene-vector" /><NailongCompanion pose={scene.pose} className="feature-character" /><NiwaMotif className="scene-spark scene-spark-one" /><NiwaMotif className="scene-spark scene-spark-two" /></div>
   </section>;
 }

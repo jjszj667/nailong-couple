@@ -9,8 +9,9 @@ import { getPublicImageUrl } from "@/lib/utils";
 import { MediaImage } from "@/components/ui/media-image";
 import { Coin } from "@/components/ui/coin";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { SubmitButton } from "@/components/ui/submit-button";
+import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { Flash } from "@/components/ui/flash";
+import { SharedVisual } from "@/components/motion/route-transition";
 
 export default async function ProductPage({
   params,
@@ -36,6 +37,7 @@ export default async function ProductPage({
     <main data-feature="product" className="page-shell py-7 sm:py-10">
       <Link
         href="/shop"
+        transitionTypes={["nav-back"]}
         className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-muted"
       >
         <ArrowLeft className="size-4" />
@@ -43,11 +45,11 @@ export default async function ProductPage({
       </Link>
       <Flash error={flash.error} />
       <section className="soft-card grid overflow-hidden p-3 md:grid-cols-2 md:p-4">
-        <MediaImage
+        <SharedVisual name={`product-${product.id}`}><MediaImage
           src={getPublicImageUrl("product-images", product.image_url)}
           alt={product.name}
           className="aspect-square w-full rounded-[1.7rem]"
-        />
+        /></SharedVisual>
         <div className="flex flex-col p-4 sm:p-8">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -95,10 +97,10 @@ export default async function ProductPage({
                   name="request_id"
                   value={crypto.randomUUID()}
                 />
-                <SubmitButton className="w-full" pendingText="正在提交兑换…">
+                <ConfirmSubmitButton className="w-full" message={`申请兑换「${product.name}」将保留 ${product.price} 枚奶龙币，等待管理员确认。确定继续吗？`}>
                   <Sparkles className="size-4" />
                   申请兑换
-                </SubmitButton>
+                </ConfirmSubmitButton>
               </form>
             ) : (
               <button type="button" disabled className="pill-button w-full">
